@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  sessions  Session[]
+  pdfs      Pdf[]
+  chats     Chat[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  expires   DateTime
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Pdf {
+  id        String     @id @default(uuid())
+  userId    String
+  fileName  String
+  filePath  String
+  metadata  Json?
+  user      User       @relation(fields: [userId], references: [id])
+  chats     Chat[]
+  chunks    PdfChunk[]
+}
+
+model Chat {
+  id        String   @id @default(uuid())
+  userId    String
+  pdfId     String?
+  messages  Message[]
+  user      User     @relation(fields: [userId], references: [id])
+  pdf       Pdf?     @relation(fields: [pdfId], references: [id])
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  chatId      String
+  role        String
+  content     String
+  timestamp   DateTime @default(now())
+  annotations Json?
+  chat        Chat     @relation(fields: [chatId], references: [id])
+}
+
+model PdfChunk {
+  id        String   @id @default(uuid())
+  pdfId     String
+  page      Int
+  start     Int
+  end       Int
+  text      String
+  embedding Float[]
+  pdf       Pdf      @relation(fields: [pdfId], references: [id])
+}

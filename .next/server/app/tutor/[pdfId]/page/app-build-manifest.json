@@ -1,0 +1,27 @@
+{
+  "pages": {
+    "/tutor/[pdfId]/page": [
+      "static/chunks/18432_next_dist_61bccf4f._.js",
+      "static/chunks/Projects_ai-tutor_src_app_favicon_ico_mjs_dd6417db._.js",
+      "static/chunks/Projects_ai-tutor_aabe9cba._.js",
+      "static/chunks/Projects_ai-tutor_151c6fe8._.css",
+      "static/chunks/Projects_ai-tutor_src_app_layout_tsx_f391a4b9._.js",
+      "static/chunks/18432_next_dist_client_components_builtin_global-error_2eaa4ec4.js",
+      "static/chunks/Projects_ai-tutor_src_components_PDFViewer_tsx_8818d5ec._.js",
+      "static/chunks/18432_zod_5aaa9a36._.js",
+      "static/chunks/18432_ai_dist_index_mjs_7151d661._.js",
+      "static/chunks/18432_b4cf9a1b._.js",
+      "static/chunks/Projects_ai-tutor_src_ebbe20de._.js",
+      "static/chunks/Projects_ai-tutor_src_app_tutor_[pdfId]_page_tsx_2eaa4ec4._.js",
+      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_d9f1832f._.js",
+      "static/chunks/18432_next_dist_compiled_react-dom_165f09e9._.js",
+      "static/chunks/18432_next_dist_compiled_next-devtools_index_95a47e1e.js",
+      "static/chunks/18432_next_dist_compiled_83daf62f._.js",
+      "static/chunks/18432_next_dist_client_c86c6b47._.js",
+      "static/chunks/18432_next_dist_cb9b678f._.js",
+      "static/chunks/18432_@swc_helpers_cjs_684a50d3._.js",
+      "static/chunks/Projects_ai-tutor_a0ff3932._.js",
+      "static/chunks/turbopack-Projects_ai-tutor_20ba9ebd._.js"
+    ]
+  }
+}

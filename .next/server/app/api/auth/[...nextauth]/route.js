@@ -1,0 +1,11 @@
+var R=require("../../../../chunks/[turbopack]_runtime.js")("server/app/api/auth/[...nextauth]/route.js")
+R.c("server/chunks/18432_next_c3317978._.js")
+R.c("server/chunks/18432_@opentelemetry_api_build_esm_1be6dffe._.js")
+R.c("server/chunks/18432_next-auth_8924e9bc._.js")
+R.c("server/chunks/18432_openid-client_4a804323._.js")
+R.c("server/chunks/18432_jose_dist_node_cjs_66b8cd4f._.js")
+R.c("server/chunks/18432_ccf8898a._.js")
+R.c("server/chunks/[root-of-the-server]__c4c9cefe._.js")
+R.m("[project]/Projects/ai-tutor/.next-internal/server/app/api/auth/[...nextauth]/route/actions.js [app-rsc] (server actions loader, ecmascript)")
+R.m("[project]/Projects/ai-tutor/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/Projects/ai-tutor/src/app/api/auth/[...nextauth]/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)")
+module.exports=R.m("[project]/Projects/ai-tutor/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/Projects/ai-tutor/src/app/api/auth/[...nextauth]/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)").exports

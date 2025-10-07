@@ -1,0 +1,65 @@
+@import 'react-pdf/dist/Page/TextLayer.css';
+@import 'react-pdf/dist/Page/AnnotationLayer.css';
+
+/* Tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Inline TextLayer.css for react-pdf */
+.react-pdf__Page__textLayer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  opacity: 0.2;
+  line-height: 1;
+}
+.react-pdf__Page__textLayer > span {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
+/* Inline AnnotationLayer.css for react-pdf */
+.react-pdf__Page__annotations.annotationLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Global styles */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Ensure html/body take full height */
+html, body, #__next {
+  height: 100%;
+}
+
+/* Force PDF Page to scale and fit container */
+.pdf-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-document-wrapper {
+  flex: 1; /* fill remaining space under header/buttons */
+  overflow: auto;
+}
+
+.react-pdf__Page__canvas {
+  display: block;
+  margin: 0 auto; /* center the PDF horizontally */
+  max-height: 100%;
+  height: auto !important;
+}
