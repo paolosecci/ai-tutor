@@ -10,6 +10,7 @@ interface ChatInterfaceProps {
 export default function ChatInterface({ pdfId, onHighlight }: ChatInterfaceProps) {
   const { messages, sendMessage, status, error, setMessages } = useChat();
 
+  // Initialize system prompt
   useEffect(() => {
     setMessages((prev: any[]) => {
       if (prev.some((m: any) => m.role === 'system')) return prev;
@@ -34,6 +35,7 @@ If there is no highlight, "highlight" can be an empty string.`,
 
   const isLoading = status === 'submitted' || status === 'streaming';
 
+  // Handle message submit
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.currentTarget as HTMLFormElement;
@@ -51,46 +53,60 @@ If there is no highlight, "highlight" can be an empty string.`,
     input.value = '';
   };
 
-  // Extract JSON from assistant messages
+  // --- Improved extractJson() ---
   const extractJson = (text: string) => {
+    if (!text) return null;
     try {
-      return JSON.parse(text.trim());
-    } catch {
-      console.log('Direct JSON parse failed, trying to extract JSON...');
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+      // Remove markdown-style ```json fences
+      const cleaned = text
+        .replace(/```json/gi, '')
+        .replace(/```/g, '')
+        .trim();
+
+      // Try direct JSON parse
+      try {
+        return JSON.parse(cleaned);
+      } catch {
+        // Try to extract JSON substring
+        const jsonMatch = cleaned.match(/{[\s\S]*}/);
+        if (jsonMatch) {
+          try {
+            return JSON.parse(jsonMatch[0]);
+          } catch (innerErr) {
+            console.warn('⚠️ Loose JSON parse attempt:', innerErr);
+            const loose = jsonMatch[0]
+              .replace(/,\s*}/g, '}')
+              .replace(/,\s*]/g, ']');
+            return JSON.parse(loose);
+          }
+        }
       }
-      throw new Error('No JSON found');
+
+      console.log('extractJson(): no JSON found in text.');
+      return null;
+    } catch (err) {
+      console.error('extractJson() fatal error:', err);
+      return null;
     }
   };
 
   // Get display text for messages
   const getDisplayText = (text: string, role: string) => {
-    if (role !== 'assistant') return text; // Display user/system messages as-is
-    try {
-      const parsed = extractJson(text);
-      return parsed?.response || text;
-    } catch (err) {
-      console.error('Display parse error:', err, 'on text:', text);
-      return text; // Fallback to raw text if parsing fails
-    }
+    if (role !== 'assistant') return text;
+    const parsed = extractJson(text);
+    return parsed?.response || text;
   };
 
-  // Extract highlight from assistant messages
+  // Extract highlight string
   const extractHighlight = (text: string) => {
-    try {
-      const parsed = extractJson(text);
-      if (parsed?.highlight && typeof parsed.highlight === 'string' && parsed.highlight.trim()) {
-        return parsed.highlight.trim();
-      }
-      return null;
-    } catch {
-      return null;
+    const parsed = extractJson(text);
+    if (parsed?.highlight && typeof parsed.highlight === 'string' && parsed.highlight.trim()) {
+      return parsed.highlight.trim();
     }
+    return null;
   };
 
-  // Handle new AI responses for highlights
+  // Handle new assistant messages for highlighting
   useEffect(() => {
     if (messages.length === 0) return;
 
@@ -102,11 +118,11 @@ If there is no highlight, "highlight" can be an empty string.`,
         console.log('Processing new AI response:', part.text);
         const highlight = extractHighlight(part.text);
         if (highlight) {
-          console.log('New highlight found:', highlight);
-          console.log('Calling onHighlight with:', [highlight]);
+          console.log('✅ New highlight found:', highlight);
+          console.log('🔍 Calling onHighlight with:', [highlight]);
           onHighlight?.([highlight]);
         } else {
-          console.log('No highlight in new response');
+          console.log('ℹ️ No highlight in new response');
         }
       }
     });
@@ -149,14 +165,11 @@ If there is no highlight, "highlight" can be an empty string.`,
         )}
       </div>
 
-      {/* Error */}
+      {/* Error display */}
       {error && <div className="text-red-500 p-2">{String(error)}</div>}
 
-      {/* Input / Footer */}
-      <form
-        onSubmit={onSubmit}
-        className="h-[5vh] flex border-t bg-white p-1 rounded-b"
-      >
+      {/* Input */}
+      <form onSubmit={onSubmit} className="h-[5vh] flex border-t bg-white p-1 rounded-b">
         <input
           name="input"
           type="text"

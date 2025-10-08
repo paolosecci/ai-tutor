@@ -33,6 +33,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$n
 ;
 function ChatInterface({ pdfId, onHighlight }) {
     const { messages, sendMessage, status, error, setMessages } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f40$ai$2d$sdk$2f$react$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useChat"])();
+    // Initialize system prompt
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         setMessages((prev)=>{
             if (prev.some((m)=>m.role === 'system')) return prev;
@@ -58,6 +59,7 @@ If there is no highlight, "highlight" can be an empty string.`
         setMessages
     ]);
     const isLoading = status === 'submitted' || status === 'streaming';
+    // Handle message submit
     const onSubmit = (e)=>{
         e.preventDefault();
         const form = e.currentTarget;
@@ -80,43 +82,50 @@ If there is no highlight, "highlight" can be an empty string.`
         });
         input.value = '';
     };
-    // Extract JSON from assistant messages
+    // --- Improved extractJson() ---
     const extractJson = (text)=>{
+        if (!text) return null;
         try {
-            return JSON.parse(text.trim());
-        } catch  {
-            console.log('Direct JSON parse failed, trying to extract JSON...');
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                return JSON.parse(jsonMatch[0]);
+            // Remove markdown-style ```json fences
+            const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+            // Try direct JSON parse
+            try {
+                return JSON.parse(cleaned);
+            } catch  {
+                // Try to extract JSON substring
+                const jsonMatch = cleaned.match(/{[\s\S]*}/);
+                if (jsonMatch) {
+                    try {
+                        return JSON.parse(jsonMatch[0]);
+                    } catch (innerErr) {
+                        console.warn('⚠️ Loose JSON parse attempt:', innerErr);
+                        const loose = jsonMatch[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+                        return JSON.parse(loose);
+                    }
+                }
             }
-            throw new Error('No JSON found');
+            console.log('extractJson(): no JSON found in text.');
+            return null;
+        } catch (err) {
+            console.error('extractJson() fatal error:', err);
+            return null;
         }
     };
     // Get display text for messages
     const getDisplayText = (text, role)=>{
-        if (role !== 'assistant') return text; // Display user/system messages as-is
-        try {
-            const parsed = extractJson(text);
-            return parsed?.response || text;
-        } catch (err) {
-            console.error('Display parse error:', err, 'on text:', text);
-            return text; // Fallback to raw text if parsing fails
-        }
+        if (role !== 'assistant') return text;
+        const parsed = extractJson(text);
+        return parsed?.response || text;
     };
-    // Extract highlight from assistant messages
+    // Extract highlight string
     const extractHighlight = (text)=>{
-        try {
-            const parsed = extractJson(text);
-            if (parsed?.highlight && typeof parsed.highlight === 'string' && parsed.highlight.trim()) {
-                return parsed.highlight.trim();
-            }
-            return null;
-        } catch  {
-            return null;
+        const parsed = extractJson(text);
+        if (parsed?.highlight && typeof parsed.highlight === 'string' && parsed.highlight.trim()) {
+            return parsed.highlight.trim();
         }
+        return null;
     };
-    // Handle new AI responses for highlights
+    // Handle new assistant messages for highlighting
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         if (messages.length === 0) return;
         const lastMsg = messages[messages.length - 1];
@@ -126,15 +135,15 @@ If there is no highlight, "highlight" can be an empty string.`
                 console.log('Processing new AI response:', part.text);
                 const highlight = extractHighlight(part.text);
                 if (highlight) {
-                    console.log('New highlight found:', highlight);
-                    console.log('Calling onHighlight with:', [
+                    console.log('✅ New highlight found:', highlight);
+                    console.log('🔍 Calling onHighlight with:', [
                         highlight
                     ]);
                     onHighlight?.([
                         highlight
                     ]);
                 } else {
-                    console.log('No highlight in new response');
+                    console.log('ℹ️ No highlight in new response');
                 }
             }
         });
@@ -152,12 +161,12 @@ If there is no highlight, "highlight" can be an empty string.`
                     children: "Chat"
                 }, void 0, false, {
                     fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                    lineNumber: 119,
+                    lineNumber: 135,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 118,
+                lineNumber: 134,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -172,12 +181,12 @@ If there is no highlight, "highlight" can be an empty string.`
                                     children: displayText
                                 }, void 0, false, {
                                     fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                                    lineNumber: 135,
+                                    lineNumber: 151,
                                     columnNumber: 19
                                 }, this)
                             }, `${msg.id}-${idx}`, false, {
                                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                                lineNumber: 129,
+                                lineNumber: 145,
                                 columnNumber: 17
                             }, this);
                         }
@@ -185,7 +194,7 @@ If there is no highlight, "highlight" can be an empty string.`
                     }))
             }, void 0, false, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 123,
+                lineNumber: 139,
                 columnNumber: 7
             }, this),
             error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -193,7 +202,7 @@ If there is no highlight, "highlight" can be an empty string.`
                 children: String(error)
             }, void 0, false, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 153,
+                lineNumber: 169,
                 columnNumber: 17
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -208,7 +217,7 @@ If there is no highlight, "highlight" can be an empty string.`
                         disabled: isLoading
                     }, void 0, false, {
                         fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                        lineNumber: 160,
+                        lineNumber: 173,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -218,19 +227,19 @@ If there is no highlight, "highlight" can be an empty string.`
                         children: "Send"
                     }, void 0, false, {
                         fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                        lineNumber: 167,
+                        lineNumber: 180,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 156,
+                lineNumber: 172,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-        lineNumber: 116,
+        lineNumber: 132,
         columnNumber: 5
     }, this);
 }

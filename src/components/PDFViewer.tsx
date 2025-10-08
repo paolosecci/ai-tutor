@@ -2,191 +2,168 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 
-// PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 export interface PDFViewerProps {
   pdfId: string;
-  highlights?: string[]; // Array of strings to highlight
+  highlights?: string[];
 }
 
 interface HighlightBox {
   id: string;
   page: number;
-  left: number; // px relative to page container
-  top: number; // px relative to page container
-  width: number; // px
-  height: number; // px
+  left: number;
+  top: number;
+  width: number;
+  height: number;
   color?: string;
 }
 
 export function PDFViewer({ pdfId, highlights = [] }: PDFViewerProps) {
-  const [numPages, setNumPages] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pdfUrl, setPdfUrl] = useState<string>('');
+  const [numPages, setNumPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pdfUrl, setPdfUrl] = useState('');
   const [highlightBoxes, setHighlightBoxes] = useState<HighlightBox[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const pdfRef = useRef<any>(null); // PDFDocumentProxy
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Fetch PDF URL once
   useEffect(() => {
     const fetchPdf = async () => {
-      try {
-        const response = await fetch(`/api/pdf/${pdfId}`);
-        if (response.ok) {
-          const json = await response.json();
-          setPdfUrl(json.filePath);
-        } else {
-          console.error('Failed to fetch PDF', response.status);
-        }
-      } catch (err) {
-        console.error('Error fetching PDF', err);
+      const response = await fetch(`/api/pdf/${pdfId}`);
+      if (response.ok) {
+        const json = await response.json();
+        setPdfUrl(json.filePath);
       }
     };
-    fetchPdf();
+    if (pdfId) fetchPdf();
   }, [pdfId]);
 
-  // Helper: find the rendered page DOM element for the currently rendered page
-  const findRenderedPageElement = useCallback((): HTMLElement | null => {
-    if (!containerRef.current) return null;
-    // react-pdf renders a wrapper with class 'react-pdf__Page' for each page
-    const pageEl = containerRef.current.querySelector('.react-pdf__Page');
-    // If you render multiple page elements in the future, you might need to filter by pageNumber attribute.
-    return pageEl as HTMLElement | null;
+  const simplify = (s: string) =>
+    (s || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/gi, '') // remove punctuation, whitespace
+      .trim();
+
+  const findPageEl = useCallback(() => {
+    return containerRef.current?.querySelector('.react-pdf__Page') as HTMLElement | null;
   }, []);
 
-  // Use the DOM text layer to compute highlight bounding boxes
   const computeHighlightsFromDOM = useCallback(
     (highlightTexts: string[]) => {
-      const pageEl = findRenderedPageElement();
-      if (!pageEl) {
-        console.warn('No rendered page DOM found when computing highlights.');
-        setHighlightBoxes([]);
-        return;
-      }
+      const pageEl = findPageEl();
+      if (!pageEl) return;
 
       const containerRect = pageEl.getBoundingClientRect();
-      const foundBoxes: HighlightBox[] = [];
+      const spans = Array.from(pageEl.querySelectorAll<HTMLElement>('span[role="presentation"]')).map((el) => {
+        const text = (el.textContent || '').replace(/\u00A0/g, ' ').trim();
+        return {
+          el,
+          text,
+          simple: simplify(text),
+          rect: el.getBoundingClientRect(),
+        };
+      });
+
+      const prefixLens: number[] = [];
+      let acc = 0;
+      for (const s of spans) {
+        prefixLens.push(acc);
+        acc += s.simple.length;
+      }
+
+      const concatenated = spans.map((s) => s.simple).join('');
+      const found: HighlightBox[] = [];
 
       highlightTexts.forEach((rawText) => {
-        const normalized = rawText.trim().toLowerCase();
+        if (!rawText?.trim()) return;
+        const normalized = simplify(rawText);
         if (!normalized) return;
 
-        // Search for elements that contain the highlight text
-        // We look at all descendants of pageEl and match innerText to avoid working with pdf.js internals
-        const allDescendants = Array.from(pageEl.querySelectorAll<HTMLElement>('*'));
-
-        // Try to find the smallest element(s) whose innerText contains the normalized highlight
-        // Strategy: find candidate elements, then pick ones with the smallest bounding rect area (more precise)
-        const candidates = allDescendants
-          .filter((el) => {
-            // ignore invisible elements
-            const style = window.getComputedStyle(el);
-            if (style && (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0')) return false;
-            const text = (el.innerText || '').toLowerCase();
-            return text.includes(normalized);
-          })
-          .map((el) => ({ el, rect: el.getBoundingClientRect(), area: el.getBoundingClientRect().width * el.getBoundingClientRect().height }));
-
-        if (candidates.length === 0) {
-          console.warn(`No DOM candidate found containing "${rawText}" on page ${currentPage}`);
+        const pos = concatenated.indexOf(normalized);
+        if (pos === -1) {
+          console.warn('No match for', rawText);
           return;
         }
 
-        // choose best candidate(s). Sort by area ascending (prefer small boxes)
-        candidates.sort((a, b) => a.area - b.area);
-        const best = candidates[0];
-
-        // For some matches, the element might contain extra text; to be a bit more precise,
-        // we can try to split text nodes and find child nodes that match smaller text. Here we keep it simple.
-        const relativeLeft = best.rect.left - containerRect.left + pageEl.scrollLeft;
-        const relativeTop = best.rect.top - containerRect.top + pageEl.scrollTop;
-
-        foundBoxes.push({
-          id: `${rawText}-${currentPage}-${foundBoxes.length}`,
-          page: currentPage,
-          left: Math.max(0, relativeLeft),
-          top: Math.max(0, relativeTop),
-          width: Math.max(2, best.rect.width),
-          height: Math.max(2, best.rect.height),
-          color: 'rgba(255, 255, 0, 0.35)',
-        });
-      });
-
-      // Update only if changed
-      setHighlightBoxes((prev) => {
-        const prevIds = prev.map((b) => b.id).join(',');
-        const newIds = foundBoxes.map((b) => b.id).join(',');
-        if (prevIds !== newIds || prev.length !== foundBoxes.length) {
-          return foundBoxes;
+        // find exact start and end spans
+        let startIdx = 0;
+        while (startIdx < prefixLens.length && prefixLens[startIdx] + spans[startIdx].simple.length <= pos) {
+          startIdx++;
         }
-        return prev;
+
+        let endIdx = startIdx;
+        const endPos = pos + normalized.length - 1;
+        while (endIdx < spans.length && prefixLens[endIdx] + spans[endIdx].simple.length <= endPos) {
+          endIdx++;
+        }
+
+        const matchedSpans = spans.slice(startIdx, endIdx + 1);
+
+        if (matchedSpans.length === 1) {
+          const s = matchedSpans[0];
+          const left = s.rect.left - containerRect.left + pageEl.scrollLeft;
+          const top = s.rect.top - containerRect.top + pageEl.scrollTop;
+          found.push({
+            id: `${rawText}-${currentPage}`,
+            page: currentPage,
+            left,
+            top,
+            width: s.rect.width,
+            height: s.rect.height,
+            color: 'rgba(255,255,0,0.35)',
+          });
+          console.debug('Matched single span', rawText, s.text);
+        } else {
+          // Multi-span match (rare)
+          const left = Math.min(...matchedSpans.map((m) => m.rect.left));
+          const top = Math.min(...matchedSpans.map((m) => m.rect.top));
+          const right = Math.max(...matchedSpans.map((m) => m.rect.right));
+          const bottom = Math.max(...matchedSpans.map((m) => m.rect.bottom));
+          found.push({
+            id: `${rawText}-${currentPage}`,
+            page: currentPage,
+            left: left - containerRect.left + pageEl.scrollLeft,
+            top: top - containerRect.top + pageEl.scrollTop,
+            width: right - left,
+            height: bottom - top,
+            color: 'rgba(255,255,0,0.35)',
+          });
+          console.debug('Matched multi-span', rawText);
+        }
       });
+
+      setHighlightBoxes(found);
     },
-    [currentPage, findRenderedPageElement]
+    [currentPage, findPageEl]
   );
 
-  // Watch for highlight text changes and run after the page/text layer renders
   useEffect(() => {
-    if (!highlights || highlights.length === 0) {
+    if (!highlights?.length) {
       setHighlightBoxes([]);
       return;
     }
-
-    // small delay to allow text layer to render (react-pdf renders text layer after canvas)
-    let cancelled = false;
-    const timer = window.setTimeout(() => {
-      if (cancelled) return;
-      try {
-        computeHighlightsFromDOM(highlights);
-      } catch (err) {
-        console.error('Error computing highlights from DOM', err);
-      }
-    }, 180); // 180ms - adjust if you find race conditions
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
+    const timer = setTimeout(() => computeHighlightsFromDOM(highlights), 150);
+    return () => clearTimeout(timer);
   }, [highlights, currentPage, computeHighlightsFromDOM]);
 
-  // When PDF loads
   const onDocumentLoadSuccess = (pdf: any) => {
     setNumPages(pdf.numPages);
-    pdfRef.current = pdf;
   };
 
-  // When page renders, we can optionally re-run highlight mapping (page change)
   const onPageRenderSuccess = () => {
-    // Allow text layer to finish and then recompute highlights if any
-    if (highlights && highlights.length > 0) {
-      // small delay for text layer
-      setTimeout(() => computeHighlightsFromDOM(highlights), 120);
-    }
+    setTimeout(() => computeHighlightsFromDOM(highlights), 120);
   };
 
   return (
     <div className="flex flex-col h-full w-full bg-gray-50 rounded shadow">
-      {/* PDF container */}
-      <div
-        ref={containerRef}
-        className="flex-1 flex justify-center items-center overflow-auto p-2"
-      >
+      <div ref={containerRef} className="flex-1 flex justify-center items-center overflow-auto p-2">
         {pdfUrl && (
-          <Document
-            file={pdfUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            className="w-auto"
-          >
+          <Document file={pdfUrl} onLoadSuccess={onDocumentLoadSuccess} className="w-auto">
             <div style={{ position: 'relative' }}>
               <Page
                 pageNumber={currentPage}
-                // let react-pdf size the page by giving a height relative to container
                 height={containerRef.current ? containerRef.current.clientHeight * 0.97 : undefined}
                 onRenderSuccess={onPageRenderSuccess}
-                loading="lazy"
               />
-              {/* Overlay for highlights */}
               <div
                 style={{
                   position: 'absolute',
@@ -210,7 +187,6 @@ export function PDFViewer({ pdfId, highlights = [] }: PDFViewerProps) {
                         height: `${h.height}px`,
                         backgroundColor: h.color,
                         borderRadius: 2,
-                        boxShadow: '0 0 0 1px rgba(255,255,0,0.15) inset',
                       }}
                     />
                   ))}
@@ -220,12 +196,11 @@ export function PDFViewer({ pdfId, highlights = [] }: PDFViewerProps) {
         )}
       </div>
 
-      {/* Footer: page buttons */}
       <div className="flex justify-center items-center gap-4 mt-2 p-2 border-t bg-white rounded-b">
         <button
-          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
           disabled={currentPage === 1}
-          className="p-2 bg-gray-200 disabled:opacity-50 rounded hover:bg-gray-300 transition"
+          className="p-2 bg-gray-200 disabled:opacity-50 rounded hover:bg-gray-300"
         >
           Prev
         </button>
@@ -233,9 +208,9 @@ export function PDFViewer({ pdfId, highlights = [] }: PDFViewerProps) {
           Page {currentPage} of {numPages}
         </span>
         <button
-          onClick={() => setCurrentPage((prev) => Math.min(numPages, prev + 1))}
+          onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
           disabled={currentPage === numPages}
-          className="p-2 bg-gray-200 disabled:opacity-50 rounded hover:bg-gray-300 transition"
+          className="p-2 bg-gray-200 disabled:opacity-50 rounded hover:bg-gray-300"
         >
           Next
         </button>

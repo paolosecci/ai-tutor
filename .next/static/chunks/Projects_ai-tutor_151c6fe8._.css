@@ -1051,8 +1051,16 @@ img, video {
   }
 }
 
+.visible {
+  visibility: visible;
+}
+
 .invisible {
   visibility: hidden;
+}
+
+.collapse {
+  visibility: collapse;
 }
 
 .absolute {
@@ -1146,6 +1154,10 @@ img, video {
 
 .flex-1 {
   flex: 1;
+}
+
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
 .flex-col {
@@ -1361,6 +1373,10 @@ img, video {
 
 .font-semibold {
   font-weight: 600;
+}
+
+.lowercase {
+  text-transform: lowercase;
 }
 
 .text-blue-500 {

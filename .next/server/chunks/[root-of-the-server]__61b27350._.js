@@ -280,6 +280,9 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$s
 const openai = new __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$openai$2f$index$2e$mjs__$5b$app$2d$route$5d$__$28$ecmascript$29$__$3c$locals$3e$__["default"]({
     apiKey: process.env.OPENAI_API_KEY
 });
+// ---------------------------
+// Helper: Split text into chunks
+// ---------------------------
 function splitIntoChunks(text, maxChars = 1200) {
     const chunks = [];
     let i = 0;
@@ -291,112 +294,34 @@ function splitIntoChunks(text, maxChars = 1200) {
             end = lastBreak > 100 ? i + lastBreak + 1 : end;
         }
         const chunk = text.slice(i, end).trim();
-        if (chunk.length > 0) {
-            chunks.push(chunk);
-        }
+        if (chunk.length > 0) chunks.push(chunk);
         i = end;
     }
     return chunks;
 }
-async function POST(req) {
+// ---------------------------
+// Background worker
+// ---------------------------
+async function processPdfInBackground(pdfRecord, arrayBuffer) {
+    console.log(`🚀 Starting background processing for PDF ${pdfRecord.id}`);
     try {
-        // Authenticate user
-        const session = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2d$auth$2f$index$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["getServerSession"])(__TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$app$2f$api$2f$auth$2f5b2e2e2e$nextauth$5d2f$route$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["authOptions"]);
-        if (!session?.user?.email) {
-            console.log('Unauthorized', session);
-            return __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-                error: 'Unauthorized'
-            }, {
-                status: 401
+        // Parse PDF text
+        const pdfParser = new __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$pdf2json$2f$dist$2f$pdfparser$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"]();
+        const buffer = Buffer.from(arrayBuffer);
+        const text = await new Promise((resolve, reject)=>{
+            pdfParser.on('pdfParser_dataError', (errData)=>reject(new Error(errData.parserError)));
+            pdfParser.on('pdfParser_dataReady', (pdfData)=>{
+                const extractedText = pdfData.Pages.flatMap((page)=>page.Texts.map((t)=>decodeURIComponent(t.R[0].T))).join(' ');
+                resolve(extractedText);
             });
-        }
-        const user = await __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].user.findUnique({
-            where: {
-                email: session.user.email
-            },
-            select: {
-                id: true
-            }
+            pdfParser.parseBuffer(buffer);
         });
-        if (!user) {
-            console.log('User not found', session.user.email);
-            return __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-                error: 'User not found'
-            }, {
-                status: 404
-            });
-        }
-        // Validate file
-        const formData = await req.formData();
-        const file = formData.get('pdf');
-        if (!file) {
-            console.log('No file uploaded');
-            return __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-                error: 'No file uploaded'
-            }, {
-                status: 400
-            });
-        }
-        if (!file.name.toLowerCase().endsWith('.pdf')) {
-            console.log('Invalid file type', file.name);
-            return __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-                error: 'Only PDF files are allowed'
-            }, {
-                status: 400
-            });
-        }
-        // Save file
-        const uploadDir = __TURBOPACK__imported__module__$5b$externals$5d2f$path__$5b$external$5d$__$28$path$2c$__cjs$29$__["default"].join(process.cwd(), 'public/uploads');
-        await (0, __TURBOPACK__imported__module__$5b$externals$5d2f$fs$2f$promises__$5b$external$5d$__$28$fs$2f$promises$2c$__cjs$29$__["mkdir"])(uploadDir, {
-            recursive: true
-        });
-        const filePath = __TURBOPACK__imported__module__$5b$externals$5d2f$path__$5b$external$5d$__$28$path$2c$__cjs$29$__["default"].join(uploadDir, `${user.id}-${Date.now()}-${file.name}`);
-        const arrayBuffer = await file.arrayBuffer();
-        await (0, __TURBOPACK__imported__module__$5b$externals$5d2f$fs$2f$promises__$5b$external$5d$__$28$fs$2f$promises$2c$__cjs$29$__["writeFile"])(filePath, Buffer.from(arrayBuffer));
-        // Create PDF record
-        const pdfRecord = await __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].pdf.create({
-            data: {
-                userId: user.id,
-                fileName: file.name,
-                filePath: `/uploads/${__TURBOPACK__imported__module__$5b$externals$5d2f$path__$5b$external$5d$__$28$path$2c$__cjs$29$__["default"].basename(filePath)}`
-            }
-        });
-        // Extract text with pdf2json
-        let text = '';
-        try {
-            const pdfParser = new __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$pdf2json$2f$dist$2f$pdfparser$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"]();
-            const buffer = Buffer.from(arrayBuffer);
-            text = await new Promise((resolve, reject)=>{
-                pdfParser.on('pdfParser_dataError', (errData)=>reject(new Error(errData.parserError)));
-                pdfParser.on('pdfParser_dataReady', (pdfData)=>{
-                    const extractedText = pdfData.Pages.flatMap((page)=>page.Texts.map((text)=>decodeURIComponent(text.R[0].T))).join(' ');
-                    resolve(extractedText);
-                });
-                pdfParser.parseBuffer(buffer);
-            });
-            console.log('PDF text extracted', {
-                pdfId: pdfRecord.id,
-                textLength: text.length
-            });
-        } catch (error) {
-            console.error('PDF parsing error', error);
-            return __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-                error: 'Failed to parse PDF'
-            }, {
-                status: 500
-            });
-        }
-        // Split into chunks
+        console.log(`📄 PDF text extracted (${text.length} chars)`);
         const chunks = splitIntoChunks(text, 1200);
         if (chunks.length === 0) {
-            console.log('No text extracted from PDF', pdfRecord.id);
-            return __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-                pdfRecord
-            }, {
-                status: 200
-            });
+            console.log('⚠️ No text extracted, skipping embeddings.');
+            return;
         }
-        // Generate and store embeddings
         let globalOffset = 0;
         for(let i = 0; i < chunks.length; i++){
             const chunk = chunks[i];
@@ -415,29 +340,88 @@ async function POST(req) {
                         start,
                         end,
                         text: chunk,
-                        embedding: embedding
+                        embedding
                     }
                 });
                 globalOffset += chunk.length + 1;
             } catch (error) {
-                console.error('Embedding creation error for chunk', {
-                    page: i + 1,
-                    error
-                });
-                return __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-                    error: 'Failed to generate embeddings'
-                }, {
-                    status: 500
-                });
+                console.error(`❌ Embedding error for chunk ${i + 1}:`, error);
             }
         }
-        console.log('PDF processed successfully', {
-            pdfId: pdfRecord.id,
-            chunkCount: chunks.length
-        });
-        return __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json(pdfRecord);
+        console.log(`✅ PDF ${pdfRecord.id} processed successfully with ${chunks.length} chunks`);
     } catch (error) {
-        console.error('Upload API error', error);
+        console.error(`🔥 Background PDF processing failed for ${pdfRecord.id}:`, error);
+    }
+}
+async function POST(req) {
+    try {
+        // Authenticate
+        const session = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2d$auth$2f$index$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["getServerSession"])(__TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$app$2f$api$2f$auth$2f5b2e2e2e$nextauth$5d2f$route$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["authOptions"]);
+        if (!session?.user?.email) {
+            return __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
+                error: 'Unauthorized'
+            }, {
+                status: 401
+            });
+        }
+        const user = await __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].user.findUnique({
+            where: {
+                email: session.user.email
+            },
+            select: {
+                id: true
+            }
+        });
+        if (!user) {
+            return __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
+                error: 'User not found'
+            }, {
+                status: 404
+            });
+        }
+        // Validate file
+        const formData = await req.formData();
+        const file = formData.get('pdf');
+        if (!file) {
+            return __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
+                error: 'No file uploaded'
+            }, {
+                status: 400
+            });
+        }
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            return __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
+                error: 'Only PDF files are allowed'
+            }, {
+                status: 400
+            });
+        }
+        // Save file locally
+        const uploadDir = __TURBOPACK__imported__module__$5b$externals$5d2f$path__$5b$external$5d$__$28$path$2c$__cjs$29$__["default"].join(process.cwd(), 'public/uploads');
+        await (0, __TURBOPACK__imported__module__$5b$externals$5d2f$fs$2f$promises__$5b$external$5d$__$28$fs$2f$promises$2c$__cjs$29$__["mkdir"])(uploadDir, {
+            recursive: true
+        });
+        const filePath = __TURBOPACK__imported__module__$5b$externals$5d2f$path__$5b$external$5d$__$28$path$2c$__cjs$29$__["default"].join(uploadDir, `${user.id}-${Date.now()}-${file.name}`);
+        const arrayBuffer = await file.arrayBuffer();
+        await (0, __TURBOPACK__imported__module__$5b$externals$5d2f$fs$2f$promises__$5b$external$5d$__$28$fs$2f$promises$2c$__cjs$29$__["writeFile"])(filePath, Buffer.from(arrayBuffer));
+        // Create PDF record in DB
+        const pdfRecord = await __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].pdf.create({
+            data: {
+                userId: user.id,
+                fileName: file.name,
+                filePath: `/uploads/${__TURBOPACK__imported__module__$5b$externals$5d2f$path__$5b$external$5d$__$28$path$2c$__cjs$29$__["default"].basename(filePath)}`
+            }
+        });
+        // ✅ Immediately return to frontend so it can redirect
+        // (non-blocking background process starts after)
+        setTimeout(()=>{
+            processPdfInBackground(pdfRecord, arrayBuffer).catch((err)=>console.error('Background processing failed:', err));
+        }, 100); // small delay to ensure response is sent first
+        return __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
+            id: pdfRecord.id
+        });
+    } catch (error) {
+        console.error('❌ Upload API error:', error);
         return __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
             error: 'Internal server error'
         }, {

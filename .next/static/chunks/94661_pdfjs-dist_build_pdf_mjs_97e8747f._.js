@@ -1,5 +1,5 @@
 (globalThis.TURBOPACK || (globalThis.TURBOPACK = [])).push([typeof document === "object" ? document.currentScript : undefined,
-"[project]/Projects/ai-tutor/node_modules/pdfjs-dist/build/pdf.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"[project]/Projects/ai-tutor/node_modules/react-pdf/node_modules/pdfjs-dist/build/pdf.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
 "use strict";
 
 /**
@@ -145,7 +145,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$n
 var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_class_static_private_method_get$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Projects/ai-tutor/node_modules/@swc/helpers/esm/_class_static_private_method_get.js [app-client] (ecmascript)");
 const __TURBOPACK__import$2e$meta__ = {
     get url () {
-        return `file://${__turbopack_context__.P("Projects/ai-tutor/node_modules/pdfjs-dist/build/pdf.mjs")}`;
+        return `file://${__turbopack_context__.P("Projects/ai-tutor/node_modules/react-pdf/node_modules/pdfjs-dist/build/pdf.mjs")}`;
     }
 };
 ;
@@ -25155,4 +25155,4 @@ function updateProperties(element, properties) {
 }),
 ]);
 
-//# sourceMappingURL=18432_pdfjs-dist_build_pdf_mjs_c1a2c6cf._.js.map
+//# sourceMappingURL=94661_pdfjs-dist_build_pdf_mjs_97e8747f._.js.map
