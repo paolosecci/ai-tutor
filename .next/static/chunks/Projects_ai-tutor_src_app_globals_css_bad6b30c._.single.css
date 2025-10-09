@@ -669,6 +669,11 @@ img, video {
   padding-bottom: .75rem;
 }
 
+.py-1 {
+  padding-top: .25rem;
+  padding-bottom: .25rem;
+}
+
 .text-center {
   text-align: center;
 }

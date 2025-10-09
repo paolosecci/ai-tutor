@@ -4,6 +4,7 @@
   "/api/pdf/[pdfId]/route": "app/api/pdf/[pdfId]/route.js",
   "/api/pdf/route": "app/api/pdf/route.js",
   "/api/user/route": "app/api/user/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
   "/page": "app/page.js",
   "/tutor/[pdfId]/page": "app/tutor/[pdfId]/page.js"
 }

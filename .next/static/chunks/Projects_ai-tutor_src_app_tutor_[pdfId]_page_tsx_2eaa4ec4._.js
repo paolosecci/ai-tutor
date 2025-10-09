@@ -1,11 +1,11 @@
 (globalThis.TURBOPACK_CHUNK_LISTS || (globalThis.TURBOPACK_CHUNK_LISTS = [])).push({
     script: typeof document === "object" ? document.currentScript : undefined,
     chunks: [
-  "static/chunks/Projects_ai-tutor_src_components_PDFViewer_tsx_1f052d08._.js",
+  "static/chunks/Projects_ai-tutor_src_components_PDFViewer_tsx_09e1aabb._.js",
   "static/chunks/18432_zod_5aaa9a36._.js",
   "static/chunks/18432_ai_dist_index_mjs_7151d661._.js",
   "static/chunks/18432_6f22db7a._.js",
-  "static/chunks/Projects_ai-tutor_src_cf2bddf2._.js"
+  "static/chunks/Projects_ai-tutor_src_d47a8fae._.js"
 ],
     source: "dynamic"
 });

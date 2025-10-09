@@ -63,6 +63,73 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
     __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
 }
 }),
+"[project]/Projects/ai-tutor/src/hooks/useSpeechSynthesis.ts [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "useSpeechSynthesis",
+    ()=>useSpeechSynthesis
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Projects/ai-tutor/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var _s = __turbopack_context__.k.signature();
+'use client';
+;
+const useSpeechSynthesis = function() {
+    let { lang = 'en-US', rate = 1, pitch = 1, volume = 1 } = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : {};
+    _s();
+    const synthRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(("TURBOPACK compile-time truthy", 1) ? window.speechSynthesis : "TURBOPACK unreachable");
+    const utteranceRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
+    const [isSpeaking, setIsSpeaking] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    const speak = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "useSpeechSynthesis.useCallback[speak]": (text)=>{
+            if (!synthRef.current || !text) return;
+            // Cancel any ongoing speech
+            if (synthRef.current.speaking) {
+                synthRef.current.cancel();
+            }
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            utterance.rate = rate;
+            utterance.pitch = pitch;
+            utterance.volume = volume;
+            utterance.onstart = ({
+                "useSpeechSynthesis.useCallback[speak]": ()=>setIsSpeaking(true)
+            })["useSpeechSynthesis.useCallback[speak]"];
+            utterance.onend = ({
+                "useSpeechSynthesis.useCallback[speak]": ()=>setIsSpeaking(false)
+            })["useSpeechSynthesis.useCallback[speak]"];
+            utterance.onerror = ({
+                "useSpeechSynthesis.useCallback[speak]": ()=>setIsSpeaking(false)
+            })["useSpeechSynthesis.useCallback[speak]"];
+            utteranceRef.current = utterance;
+            synthRef.current.speak(utterance);
+        }
+    }["useSpeechSynthesis.useCallback[speak]"], [
+        lang,
+        rate,
+        pitch,
+        volume
+    ]);
+    const cancel = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "useSpeechSynthesis.useCallback[cancel]": ()=>{
+            var _synthRef_current;
+            if ((_synthRef_current = synthRef.current) === null || _synthRef_current === void 0 ? void 0 : _synthRef_current.speaking) {
+                synthRef.current.cancel();
+                setIsSpeaking(false);
+            }
+        }
+    }["useSpeechSynthesis.useCallback[cancel]"], []);
+    return {
+        speak,
+        cancel,
+        isSpeaking
+    };
+};
+_s(useSpeechSynthesis, "lwiLBBA+V0O3bJ0HaEHOdVyjQHQ=");
+if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
+    __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
+}
+}),
 "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx [app-client] (ecmascript)", ((__turbopack_context__) => {
 "use strict";
 
@@ -75,9 +142,11 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$n
 var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Projects/ai-tutor/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f40$ai$2d$sdk$2f$react$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Projects/ai-tutor/node_modules/@ai-sdk/react/dist/index.mjs [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$hooks$2f$useSpeechRecognition$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Projects/ai-tutor/src/hooks/useSpeechRecognition.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$hooks$2f$useSpeechSynthesis$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Projects/ai-tutor/src/hooks/useSpeechSynthesis.ts [app-client] (ecmascript)");
 ;
 var _s = __turbopack_context__.k.signature();
 'use client';
+;
 ;
 ;
 ;
@@ -86,11 +155,16 @@ function ChatInterface(param) {
     _s();
     const { messages, sendMessage, status, error, setMessages } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f40$ai$2d$sdk$2f$react$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useChat"])();
     const { transcript, isListening, startListening, stopListening, setTranscript } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$hooks$2f$useSpeechRecognition$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSpeechRecognition"])();
+    const { speak, cancel, isSpeaking } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$hooks$2f$useSpeechSynthesis$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSpeechSynthesis"])({
+        lang: 'en-US',
+        rate: 1
+    });
+    const [isSpeakingEnabled, setIsSpeakingEnabled] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
     const lastHighlightRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     const lastMessageIdRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     const messagesContainerRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     const DEBUG = ("TURBOPACK compile-time value", "development") === 'development';
-    // Initialize system prompt
+    // === Initialize system prompt ===
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "ChatInterface.useEffect": ()=>{
             setMessages({
@@ -118,24 +192,22 @@ function ChatInterface(param) {
         pdfId,
         setMessages
     ]);
-    // Autoscroll to bottom when new messages are added or user submits
+    // === Autoscroll on new messages ===
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "ChatInterface.useEffect": ()=>{
             const container = messagesContainerRef.current;
             if (!container) return;
             const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-            if (isNearBottom) {
-                container.scrollTo({
-                    top: container.scrollHeight,
-                    behavior: 'smooth'
-                });
-            }
+            if (isNearBottom) container.scrollTo({
+                top: container.scrollHeight,
+                behavior: 'smooth'
+            });
         }
     }["ChatInterface.useEffect"], [
         messages
     ]);
     const isLoading = status === 'submitted' || status === 'streaming';
-    // Handle message submit
+    // === Handle submit ===
     const onSubmit = (e)=>{
         e.preventDefault();
         const value = transcript.trim();
@@ -155,18 +227,16 @@ function ChatInterface(param) {
             }
         });
         setTranscript('');
-        // Force scroll to bottom after user submits
+        stopListening();
         setTimeout(()=>{
             const container = messagesContainerRef.current;
-            if (container) {
-                container.scrollTo({
-                    top: container.scrollHeight,
-                    behavior: 'smooth'
-                });
-            }
+            if (container) container.scrollTo({
+                top: container.scrollHeight,
+                behavior: 'smooth'
+            });
         }, 0);
     };
-    // Auto-send after speaking (optional)
+    // Optional: auto-send after stopping mic
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "ChatInterface.useEffect": ()=>{
             if (!isListening && transcript.trim()) {
@@ -191,7 +261,7 @@ function ChatInterface(param) {
     }["ChatInterface.useEffect"], [
         isListening
     ]);
-    // Extract JSON from response
+    // === Extract JSON from assistant response ===
     const extractJson = (text)=>{
         if (!text) return null;
         try {
@@ -199,30 +269,26 @@ function ChatInterface(param) {
             try {
                 return JSON.parse(cleaned);
             } catch (e) {
-                const jsonMatch = cleaned.match(/{[\s\S]*}/);
-                if (jsonMatch) {
+                const match = cleaned.match(/{[\s\S]*}/);
+                if (match) {
                     try {
-                        return JSON.parse(jsonMatch[0]);
-                    } catch (innerErr) {
-                        if ("TURBOPACK compile-time truthy", 1) console.warn('⚠️ Loose JSON parse attempt failed:', innerErr);
-                        const loose = jsonMatch[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+                        return JSON.parse(match[0]);
+                    } catch (e) {
+                        const loose = match[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
                         return JSON.parse(loose);
                     }
                 }
             }
             return null;
-        } catch (err) {
-            if ("TURBOPACK compile-time truthy", 1) console.debug('extractJson(): no JSON found');
+        } catch (e) {
             return null;
         }
     };
-    // Get display text for messages
     const getDisplayText = (text, role)=>{
         if (role !== 'assistant') return text;
         const parsed = extractJson(text);
         return (parsed === null || parsed === void 0 ? void 0 : parsed.response) || text;
     };
-    // Extract highlight string
     const extractHighlight = (text)=>{
         const parsed = extractJson(text);
         if ((parsed === null || parsed === void 0 ? void 0 : parsed.highlight) && typeof parsed.highlight === 'string' && parsed.highlight.trim()) {
@@ -230,7 +296,7 @@ function ChatInterface(param) {
         }
         return null;
     };
-    // Handle new assistant messages for highlighting
+    // === Handle new assistant messages for highlight + TTS ===
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "ChatInterface.useEffect": ()=>{
             if (messages.length === 0 || status === 'streaming') return;
@@ -240,22 +306,16 @@ function ChatInterface(param) {
             lastMsg.parts.forEach({
                 "ChatInterface.useEffect": (part)=>{
                     if (part.type === 'text') {
-                        if ("TURBOPACK compile-time truthy", 1) console.debug('🧩 Processing final AI response:', part.text);
-                        const highlight = extractHighlight(part.text);
+                        const parsed = extractJson(part.text);
+                        const highlight = parsed === null || parsed === void 0 ? void 0 : parsed.highlight;
+                        const response = parsed === null || parsed === void 0 ? void 0 : parsed.response;
                         if (highlight && highlight !== lastHighlightRef.current) {
-                            if ("TURBOPACK compile-time truthy", 1) {
-                                console.debug('✅ New highlight found:', highlight);
-                                console.debug('🔍 Calling onHighlight with:', [
-                                    highlight
-                                ]);
-                            }
                             lastHighlightRef.current = highlight;
                             onHighlight === null || onHighlight === void 0 ? void 0 : onHighlight([
                                 highlight
                             ]);
-                        } else if ("TURBOPACK compile-time truthy", 1) {
-                            console.debug('ℹ️ No new highlight in response');
                         }
+                        if (response && isSpeakingEnabled) speak(response);
                     }
                 }
             }["ChatInterface.useEffect"]);
@@ -264,24 +324,36 @@ function ChatInterface(param) {
         messages,
         status,
         onHighlight,
-        DEBUG
+        isSpeakingEnabled
     ]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "flex flex-col h-full w-full bg-gray-50 rounded shadow",
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "h-[5vh] p-2 border-b flex items-center justify-between bg-white rounded-t",
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
-                    className: "text-lg font-semibold text-gray-800",
-                    children: "Chat"
-                }, void 0, false, {
-                    fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                    lineNumber: 184,
-                    columnNumber: 9
-                }, this)
-            }, void 0, false, {
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
+                        className: "text-lg font-semibold text-gray-800",
+                        children: "Chat"
+                    }, void 0, false, {
+                        fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
+                        lineNumber: 150,
+                        columnNumber: 9
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                        type: "button",
+                        className: "px-3 py-1 rounded ".concat(isSpeakingEnabled ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'),
+                        onClick: ()=>setIsSpeakingEnabled(!isSpeakingEnabled),
+                        children: isSpeakingEnabled ? '🔊 Voice On' : '🔈 Off'
+                    }, void 0, false, {
+                        fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
+                        lineNumber: 151,
+                        columnNumber: 9
+                    }, this)
+                ]
+            }, void 0, true, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 183,
+                lineNumber: 149,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -297,12 +369,12 @@ function ChatInterface(param) {
                                     children: displayText
                                 }, void 0, false, {
                                     fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                                    lineNumber: 203,
+                                    lineNumber: 168,
                                     columnNumber: 19
                                 }, this)
                             }, "".concat(msg.id, "-").concat(idx), false, {
                                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                                lineNumber: 197,
+                                lineNumber: 167,
                                 columnNumber: 17
                             }, this);
                         }
@@ -310,7 +382,7 @@ function ChatInterface(param) {
                     }))
             }, void 0, false, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 188,
+                lineNumber: 161,
                 columnNumber: 7
             }, this),
             error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -318,7 +390,7 @@ function ChatInterface(param) {
                 children: String(error)
             }, void 0, false, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 221,
+                lineNumber: 182,
                 columnNumber: 17
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -335,7 +407,7 @@ function ChatInterface(param) {
                         onChange: (e)=>setTranscript(e.target.value)
                     }, void 0, false, {
                         fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                        lineNumber: 225,
+                        lineNumber: 186,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -346,7 +418,7 @@ function ChatInterface(param) {
                         children: "🎤"
                     }, void 0, false, {
                         fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                        lineNumber: 234,
+                        lineNumber: 195,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -356,26 +428,27 @@ function ChatInterface(param) {
                         children: "Send"
                     }, void 0, false, {
                         fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                        lineNumber: 244,
+                        lineNumber: 203,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 224,
+                lineNumber: 185,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-        lineNumber: 180,
+        lineNumber: 146,
         columnNumber: 5
     }, this);
 }
-_s(ChatInterface, "lAQlhdxsWaqNaatBIz2kNJxOgx4=", false, function() {
+_s(ChatInterface, "1TlVV9jECvZP9IrVeZ/x1qAJPug=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f40$ai$2d$sdk$2f$react$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useChat"],
-        __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$hooks$2f$useSpeechRecognition$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSpeechRecognition"]
+        __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$hooks$2f$useSpeechRecognition$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSpeechRecognition"],
+        __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$hooks$2f$useSpeechSynthesis$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSpeechSynthesis"]
     ];
 });
 _c = ChatInterface;
@@ -638,4 +711,4 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
 }),
 ]);
 
-//# sourceMappingURL=Projects_ai-tutor_src_d9935a9d._.js.map
+//# sourceMappingURL=Projects_ai-tutor_src_2e52d640._.js.map

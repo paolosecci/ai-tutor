@@ -276,12 +276,12 @@ function ChatInterface(param) {
                     children: "Chat"
                 }, void 0, false, {
                     fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                    lineNumber: 183,
+                    lineNumber: 184,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 182,
+                lineNumber: 183,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -297,12 +297,12 @@ function ChatInterface(param) {
                                     children: displayText
                                 }, void 0, false, {
                                     fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                                    lineNumber: 202,
+                                    lineNumber: 203,
                                     columnNumber: 19
                                 }, this)
                             }, "".concat(msg.id, "-").concat(idx), false, {
                                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                                lineNumber: 196,
+                                lineNumber: 197,
                                 columnNumber: 17
                             }, this);
                         }
@@ -310,7 +310,7 @@ function ChatInterface(param) {
                     }))
             }, void 0, false, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 187,
+                lineNumber: 188,
                 columnNumber: 7
             }, this),
             error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -318,7 +318,7 @@ function ChatInterface(param) {
                 children: String(error)
             }, void 0, false, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 220,
+                lineNumber: 221,
                 columnNumber: 17
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -335,7 +335,7 @@ function ChatInterface(param) {
                         onChange: (e)=>setTranscript(e.target.value)
                     }, void 0, false, {
                         fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                        lineNumber: 224,
+                        lineNumber: 225,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -346,7 +346,7 @@ function ChatInterface(param) {
                         children: "🎤"
                     }, void 0, false, {
                         fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                        lineNumber: 233,
+                        lineNumber: 234,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -356,19 +356,19 @@ function ChatInterface(param) {
                         children: "Send"
                     }, void 0, false, {
                         fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                        lineNumber: 243,
+                        lineNumber: 244,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 223,
+                lineNumber: 224,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-        lineNumber: 179,
+        lineNumber: 180,
         columnNumber: 5
     }, this);
 }
