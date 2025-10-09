@@ -6,7 +6,7 @@ import prisma from '@/lib/prisma';
 import { authOptions } from '../auth/[...nextauth]/route';
 
 const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const provider = aiSdkOpenAI('gpt-4.1-nano');
+const provider = aiSdkOpenAI('gpt-4o-mini	');
 
 function cosine(a: number[], b: number[]) {
   let dot = 0;

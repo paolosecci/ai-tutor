@@ -30,37 +30,37 @@ function PDFViewer(param) {
     const [currentPage, setCurrentPage] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(1);
     const [pdfUrl, setPdfUrl] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('');
     const [highlightBoxes, setHighlightBoxes] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
-    const [pageTexts, setPageTexts] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]); // Cache page text
+    const [pageTexts, setPageTexts] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
+    const [multiPageHighlight, setMultiPageHighlight] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const containerRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     const pdfRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
-    const lastHighlightRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null); // Prevent duplicate processing
+    const lastHighlightRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     const DEBUG = ("TURBOPACK compile-time value", "development") === 'development';
     // Fetch PDF URL
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "PDFViewer.useEffect": ()=>{
-            const fetchPdf = {
-                "PDFViewer.useEffect.fetchPdf": async ()=>{
+            if (!pdfId) return;
+            ({
+                "PDFViewer.useEffect": async ()=>{
                     try {
-                        const response = await fetch("/api/pdf/".concat(pdfId));
-                        if (response.ok) {
-                            const json = await response.json();
+                        const res = await fetch("/api/pdf/".concat(pdfId));
+                        if (res.ok) {
+                            const json = await res.json();
                             setPdfUrl(json.filePath);
                         } else {
-                            console.error('Failed to fetch PDF:', response.status);
+                            console.error('Failed to fetch PDF:', res.status);
                         }
                     } catch (err) {
                         console.error('Error fetching PDF:', err);
                     }
                 }
-            }["PDFViewer.useEffect.fetchPdf"];
-            if (pdfId) fetchPdf();
+            })["PDFViewer.useEffect"]();
         }
     }["PDFViewer.useEffect"], [
         pdfId
     ]);
-    // Normalize text: remove spaces, punctuation, and convert to lowercase
-    const simplify = (s)=>(s || '').toLowerCase().replace(/[^a-z0-9]+/gi, '') // Remove punctuation, whitespace
-        .trim();
+    // Normalize text
+    const simplify = (s)=>(s || '').toLowerCase().replace(/[^a-z0-9]+/gi, '').replace(/\u2013|\u2014/g, '').replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').trim();
     // Split long text into chunks
     const splitIntoChunks = function(text) {
         let maxLength = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : 100;
@@ -78,55 +78,65 @@ function PDFViewer(param) {
         if (currentChunk) chunks.push(currentChunk.trim());
         return chunks;
     };
-    // Extract text from all pages
+    // Fuzzy match
+    const fuzzyMatch = function(source, target) {
+        let threshold = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : 0.8;
+        const src = simplify(source);
+        const tgt = simplify(target);
+        if (src.includes(tgt)) return true;
+        let matches = 0;
+        let j = 0;
+        for(let i = 0; i < src.length && j < tgt.length; i++){
+            if (src[i] === tgt[j]) {
+                matches++;
+                j++;
+            }
+        }
+        return matches / tgt.length >= threshold;
+    };
+    // Extract text from pages
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "PDFViewer.useEffect": ()=>{
-            if (pdfRef.current && numPages > 0) {
-                ({
-                    "PDFViewer.useEffect": async ()=>{
-                        try {
-                            const texts = new Array(numPages + 1).fill('');
-                            for(let pageNum = 1; pageNum <= numPages; pageNum++){
-                                const page = await pdfRef.current.getPage(pageNum);
-                                const textContent = await page.getTextContent();
-                                texts[pageNum] = textContent.items.map({
-                                    "PDFViewer.useEffect": (item)=>item.str
-                                }["PDFViewer.useEffect"]).join(' ');
-                            }
-                            setPageTexts(texts);
-                            if ("TURBOPACK compile-time truthy", 1) console.log('Extracted page texts:', texts.map({
-                                "PDFViewer.useEffect": (t, i)=>({
-                                        page: i,
-                                        length: t.length
-                                    })
-                            }["PDFViewer.useEffect"]));
-                        } catch (err) {
-                            console.error('Error extracting page texts:', err);
+            if (!pdfRef.current || numPages === 0) return;
+            ({
+                "PDFViewer.useEffect": async ()=>{
+                    try {
+                        const texts = [];
+                        for(let i = 1; i <= numPages; i++){
+                            const page = await pdfRef.current.getPage(i);
+                            const content = await page.getTextContent();
+                            texts[i] = content.items.map({
+                                "PDFViewer.useEffect": (item)=>item.str
+                            }["PDFViewer.useEffect"]).join(' ').replace(/\s+/g, ' ');
                         }
+                        setPageTexts(texts);
+                        if ("TURBOPACK compile-time truthy", 1) console.log('Page texts extracted:', texts.map({
+                            "PDFViewer.useEffect": (t, i)=>({
+                                    page: i,
+                                    length: t.length
+                                })
+                        }["PDFViewer.useEffect"]));
+                    } catch (err) {
+                        console.error('Error extracting page texts:', err);
                     }
-                })["PDFViewer.useEffect"]();
-            }
+                }
+            })["PDFViewer.useEffect"]();
         }
     }["PDFViewer.useEffect"], [
         numPages,
         DEBUG
     ]);
-    // Find the rendered page DOM element
     const findPageEl = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "PDFViewer.useCallback[findPageEl]": ()=>{
             var _containerRef_current;
             return (_containerRef_current = containerRef.current) === null || _containerRef_current === void 0 ? void 0 : _containerRef_current.querySelector('.react-pdf__Page');
         }
     }["PDFViewer.useCallback[findPageEl]"], []);
-    // Compute highlights using DOM text layer
+    // Compute highlights
     const computeHighlightsFromDOM = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
-        "PDFViewer.useCallback[computeHighlightsFromDOM]": (highlightTexts, targetPage)=>{
+        "PDFViewer.useCallback[computeHighlightsFromDOM]": (highlightTexts, targetPage, keyPhrase)=>{
             const pageEl = findPageEl();
-            if (!pageEl) {
-                if ("TURBOPACK compile-time truthy", 1) console.warn('No rendered page DOM found.');
-                setHighlightBoxes([]);
-                return;
-            }
+            if (!pageEl) return setHighlightBoxes([]);
             const containerRect = pageEl.getBoundingClientRect();
             const spans = Array.from(pageEl.querySelectorAll('span[role="presentation"]')).map({
                 "PDFViewer.useCallback[computeHighlightsFromDOM].spans": (el)=>{
@@ -156,100 +166,122 @@ function PDFViewer(param) {
                     if (!(rawText === null || rawText === void 0 ? void 0 : rawText.trim())) return;
                     const normalized = simplify(rawText);
                     if (!normalized) return;
-                    // Try exact match first
-                    let pos = concatenated.indexOf(normalized);
                     let matchedSpans = [];
-                    // If no exact match, try chunked matching
-                    if (pos === -1) {
+                    let pos = concatenated.indexOf(normalized);
+                    // Exact match
+                    if (pos !== -1) {
+                        let startIdx = 0;
+                        while(startIdx < prefixLens.length && prefixLens[startIdx] + spans[startIdx].simple.length <= pos)startIdx++;
+                        let endIdx = startIdx;
+                        const endPos = pos + normalized.length - 1;
+                        while(endIdx < spans.length && prefixLens[endIdx] + spans[endIdx].simple.length <= endPos)endIdx++;
+                        matchedSpans = spans.slice(startIdx, endIdx + 1);
+                        if ("TURBOPACK compile-time truthy", 1) console.log('Exact match:', {
+                            rawText,
+                            page: targetPage
+                        });
+                    }
+                    // Chunked match
+                    if (!matchedSpans.length) {
                         const chunks = splitIntoChunks(rawText);
                         let currentPos = 0;
                         matchedSpans = [];
                         for (const chunk of chunks){
-                            const chunkNormalized = simplify(chunk);
-                            const chunkPos = concatenated.indexOf(chunkNormalized, currentPos);
+                            const chunkNorm = simplify(chunk);
+                            const chunkPos = concatenated.indexOf(chunkNorm, currentPos);
                             if (chunkPos === -1) {
                                 matchedSpans = [];
                                 break;
                             }
                             let startIdx = 0;
-                            while(startIdx < prefixLens.length && prefixLens[startIdx] + spans[startIdx].simple.length <= chunkPos){
-                                startIdx++;
-                            }
+                            while(startIdx < prefixLens.length && prefixLens[startIdx] + spans[startIdx].simple.length <= chunkPos)startIdx++;
                             let endIdx = startIdx;
-                            const endPos = chunkPos + chunkNormalized.length - 1;
-                            while(endIdx < spans.length && prefixLens[endIdx] + spans[endIdx].simple.length <= endPos){
-                                endIdx++;
-                            }
+                            const endPos = chunkPos + chunkNorm.length - 1;
+                            while(endIdx < spans.length && prefixLens[endIdx] + spans[endIdx].simple.length <= endPos)endIdx++;
                             matchedSpans.push(...spans.slice(startIdx, endIdx + 1));
-                            currentPos = chunkPos + chunkNormalized.length;
+                            currentPos = chunkPos + chunkNorm.length;
                         }
-                    } else {
-                        let startIdx = 0;
-                        while(startIdx < prefixLens.length && prefixLens[startIdx] + spans[startIdx].simple.length <= pos){
-                            startIdx++;
-                        }
-                        let endIdx = startIdx;
-                        const endPos = pos + normalized.length - 1;
-                        while(endIdx < spans.length && prefixLens[endIdx] + spans[endIdx].simple.length <= endPos){
-                            endIdx++;
-                        }
-                        matchedSpans = spans.slice(startIdx, endIdx + 1);
-                    }
-                    if (matchedSpans.length === 0) {
-                        if ("TURBOPACK compile-time truthy", 1) console.warn('No match for:', {
+                        if (matchedSpans.length && DEBUG) console.log('Chunked match:', {
                             rawText,
                             page: targetPage
                         });
-                        return;
                     }
-                    if (matchedSpans.length === 1) {
-                        const s = matchedSpans[0];
-                        const left = s.rect.left - containerRect.left + pageEl.scrollLeft;
-                        const top = s.rect.top - containerRect.top + pageEl.scrollTop;
-                        found.push({
-                            id: "".concat(rawText, "-").concat(targetPage),
-                            page: targetPage,
-                            left,
-                            top,
-                            width: s.rect.width,
-                            height: s.rect.height,
-                            color: 'rgba(255,255,0,0.35)'
-                        });
-                        if ("TURBOPACK compile-time truthy", 1) console.debug('Matched single span:', {
+                    // Fuzzy match
+                    if (!matchedSpans.length && fuzzyMatch(spans.map({
+                        "PDFViewer.useCallback[computeHighlightsFromDOM]": (s)=>s.text
+                    }["PDFViewer.useCallback[computeHighlightsFromDOM]"]).join(' '), rawText)) {
+                        matchedSpans = spans.filter({
+                            "PDFViewer.useCallback[computeHighlightsFromDOM]": (s)=>fuzzyMatch(s.text, rawText)
+                        }["PDFViewer.useCallback[computeHighlightsFromDOM]"]);
+                        if ("TURBOPACK compile-time truthy", 1) console.log('Fuzzy match:', {
                             rawText,
-                            matchedText: s.text,
-                            page: targetPage
-                        });
-                    } else {
-                        const left = Math.min(...matchedSpans.map({
-                            "PDFViewer.useCallback[computeHighlightsFromDOM].left": (m)=>m.rect.left
-                        }["PDFViewer.useCallback[computeHighlightsFromDOM].left"]));
-                        const top = Math.min(...matchedSpans.map({
-                            "PDFViewer.useCallback[computeHighlightsFromDOM].top": (m)=>m.rect.top
-                        }["PDFViewer.useCallback[computeHighlightsFromDOM].top"]));
-                        const right = Math.max(...matchedSpans.map({
-                            "PDFViewer.useCallback[computeHighlightsFromDOM].right": (m)=>m.rect.right
-                        }["PDFViewer.useCallback[computeHighlightsFromDOM].right"]));
-                        const bottom = Math.max(...matchedSpans.map({
-                            "PDFViewer.useCallback[computeHighlightsFromDOM].bottom": (m)=>m.rect.bottom
-                        }["PDFViewer.useCallback[computeHighlightsFromDOM].bottom"]));
-                        found.push({
-                            id: "".concat(rawText, "-").concat(targetPage),
-                            page: targetPage,
-                            left: left - containerRect.left + pageEl.scrollLeft,
-                            top: top - containerRect.top + pageEl.scrollTop,
-                            width: right - left,
-                            height: bottom - top,
-                            color: 'rgba(255,255,0,0.35)'
-                        });
-                        if ("TURBOPACK compile-time truthy", 1) console.debug('Matched multi-span:', {
-                            rawText,
-                            matchedSpans: matchedSpans.map({
-                                "PDFViewer.useCallback[computeHighlightsFromDOM]": (s)=>s.text
-                            }["PDFViewer.useCallback[computeHighlightsFromDOM]"]),
                             page: targetPage
                         });
                     }
+                    // KeyPhrase fallback
+                    if (!matchedSpans.length && keyPhrase) {
+                        const posKP = concatenated.indexOf(simplify(keyPhrase));
+                        if (posKP !== -1) {
+                            let startIdx = 0;
+                            while(startIdx < prefixLens.length && prefixLens[startIdx] + spans[startIdx].simple.length <= posKP)startIdx++;
+                            let endIdx = startIdx;
+                            const endPos = posKP + simplify(keyPhrase).length - 1;
+                            while(endIdx < spans.length && prefixLens[endIdx] + spans[endIdx].simple.length <= endPos)endIdx++;
+                            matchedSpans = spans.slice(startIdx, endIdx + 1);
+                            console.log('Fallback to key phrase for "'.concat(rawText, '" using "').concat(keyPhrase, '" on page ').concat(targetPage));
+                        }
+                    }
+                    // Significant word fallback
+                    if (!matchedSpans.length && keyPhrase) {
+                        const commonWords = [
+                            'the',
+                            'and',
+                            'of',
+                            'to',
+                            'in',
+                            'a',
+                            'is',
+                            'that'
+                        ];
+                        const fallbackWord = keyPhrase.split(/\s+/).find({
+                            "PDFViewer.useCallback[computeHighlightsFromDOM].fallbackWord": (w)=>w.length > 4 && !commonWords.includes(w.toLowerCase())
+                        }["PDFViewer.useCallback[computeHighlightsFromDOM].fallbackWord"]);
+                        if (fallbackWord) {
+                            const posWord = concatenated.indexOf(simplify(fallbackWord));
+                            if (posWord !== -1) {
+                                let startIdx = 0;
+                                while(startIdx < prefixLens.length && prefixLens[startIdx] + spans[startIdx].simple.length <= posWord)startIdx++;
+                                let endIdx = startIdx;
+                                const endPos = posWord + simplify(fallbackWord).length - 1;
+                                while(endIdx < spans.length && prefixLens[endIdx] + spans[endIdx].simple.length <= endPos)endIdx++;
+                                matchedSpans = spans.slice(startIdx, endIdx + 1);
+                                console.log('Fallback to significant word for "'.concat(rawText, '" using "').concat(fallbackWord, '" on page ').concat(targetPage));
+                            }
+                        }
+                    }
+                    if (!matchedSpans.length) return;
+                    // Compute highlight box
+                    const left = Math.min(...matchedSpans.map({
+                        "PDFViewer.useCallback[computeHighlightsFromDOM].left": (m)=>m.rect.left
+                    }["PDFViewer.useCallback[computeHighlightsFromDOM].left"]));
+                    const top = Math.min(...matchedSpans.map({
+                        "PDFViewer.useCallback[computeHighlightsFromDOM].top": (m)=>m.rect.top
+                    }["PDFViewer.useCallback[computeHighlightsFromDOM].top"]));
+                    const right = Math.max(...matchedSpans.map({
+                        "PDFViewer.useCallback[computeHighlightsFromDOM].right": (m)=>m.rect.right
+                    }["PDFViewer.useCallback[computeHighlightsFromDOM].right"]));
+                    const bottom = Math.max(...matchedSpans.map({
+                        "PDFViewer.useCallback[computeHighlightsFromDOM].bottom": (m)=>m.rect.bottom
+                    }["PDFViewer.useCallback[computeHighlightsFromDOM].bottom"]));
+                    found.push({
+                        id: "".concat(rawText, "-").concat(targetPage),
+                        page: targetPage,
+                        left: left - containerRect.left + pageEl.scrollLeft,
+                        top: top - containerRect.top + pageEl.scrollTop,
+                        width: right - left,
+                        height: bottom - top,
+                        color: 'rgba(255,255,0,0.35)'
+                    });
                 }
             }["PDFViewer.useCallback[computeHighlightsFromDOM]"]);
             setHighlightBoxes(found);
@@ -258,46 +290,53 @@ function PDFViewer(param) {
         findPageEl,
         DEBUG
     ]);
-    // Search for highlights across all pages
+    // Highlight search across pages
     const findHighlightPage = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "PDFViewer.useCallback[findHighlightPage]": (highlightTexts)=>{
             if (!pageTexts.length || !highlightTexts.length) return;
-            if (highlightTexts.join('|') === lastHighlightRef.current) return; // Skip duplicate highlights
+            if (highlightTexts.join('|') === lastHighlightRef.current) return;
             lastHighlightRef.current = highlightTexts.join('|');
-            for(let pageNum = 1; pageNum <= numPages; pageNum++){
-                const pageText = pageTexts[pageNum];
-                if (!pageText) continue;
-                const normalizedPageText = simplify(pageText);
-                const match = highlightTexts.some({
-                    "PDFViewer.useCallback[findHighlightPage].match": (text)=>normalizedPageText.includes(simplify(text))
-                }["PDFViewer.useCallback[findHighlightPage].match"]);
-                if (match) {
-                    if (pageNum !== currentPage) {
-                        if ("TURBOPACK compile-time truthy", 1) console.log("Highlight found on page ".concat(pageNum, ", navigating..."));
-                        setCurrentPage(pageNum);
+            const getConcatenatedText = {
+                "PDFViewer.useCallback[findHighlightPage].getConcatenatedText": (start, end)=>pageTexts.slice(start, end + 1).join(' ')
+            }["PDFViewer.useCallback[findHighlightPage].getConcatenatedText"];
+            highlightTexts.forEach({
+                "PDFViewer.useCallback[findHighlightPage]": (rawText)=>{
+                    if (!(rawText === null || rawText === void 0 ? void 0 : rawText.trim())) return;
+                    const normalized = simplify(rawText);
+                    // Candidate pages containing first word
+                    const firstWord = rawText.split(/\s+/)[0] || '';
+                    const normalizedFirstWord = simplify(firstWord);
+                    const candidatePages = [];
+                    for(let p = 1; p <= numPages; p++){
+                        if (simplify(pageTexts[p] || '').includes(normalizedFirstWord)) candidatePages.push(p);
                     }
-                    setTimeout({
-                        "PDFViewer.useCallback[findHighlightPage]": ()=>computeHighlightsFromDOM(highlightTexts, pageNum)
-                    }["PDFViewer.useCallback[findHighlightPage]"], 1000); // Increased delay
-                    return;
+                    // Full-text match
+                    for (const p of candidatePages){
+                        if (simplify(pageTexts[p]).includes(normalized)) {
+                            if (p !== currentPage) setCurrentPage(p);
+                            computeHighlightsFromDOM([
+                                rawText
+                            ], p, rawText.split(/\s+/).slice(0, 7).join(' '));
+                            return;
+                        }
+                    }
+                // Keyphrase / significant word fallback is handled inside computeHighlightsFromDOM
                 }
-            }
-            if ("TURBOPACK compile-time truthy", 1) console.warn('No page found for highlights:', highlightTexts);
-            setHighlightBoxes([]);
+            }["PDFViewer.useCallback[findHighlightPage]"]);
         }
     }["PDFViewer.useCallback[findHighlightPage]"], [
         pageTexts,
         numPages,
         currentPage,
-        computeHighlightsFromDOM,
-        DEBUG
+        computeHighlightsFromDOM
     ]);
-    // Watch for highlight changes
+    // Watch for highlights
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "PDFViewer.useEffect": ()=>{
-            if (!(highlights === null || highlights === void 0 ? void 0 : highlights.length)) {
+            if (!highlights.length) {
                 setHighlightBoxes([]);
                 lastHighlightRef.current = null;
+                setMultiPageHighlight(null);
                 return;
             }
             findHighlightPage(highlights);
@@ -306,15 +345,14 @@ function PDFViewer(param) {
         highlights,
         findHighlightPage
     ]);
-    // Handle document load
     const onDocumentLoadSuccess = (pdf)=>{
         setNumPages(pdf.numPages);
         pdfRef.current = pdf;
     };
-    // Handle page render
     const onPageRenderSuccess = ()=>{
-        if (highlights === null || highlights === void 0 ? void 0 : highlights.length) {
-            setTimeout(()=>computeHighlightsFromDOM(highlights, currentPage), 1000); // Increased delay
+        if (highlights.length) {
+            const keyPhrase = highlights[0].split(/\s+/).slice(0, 7).join(' ');
+            setTimeout(()=>computeHighlightsFromDOM(highlights, currentPage, keyPhrase), 500);
         }
     };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -328,7 +366,7 @@ function PDFViewer(param) {
                         children: "PDF Viewer"
                     }, void 0, false, {
                         fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
-                        lineNumber: 275,
+                        lineNumber: 307,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -337,13 +375,13 @@ function PDFViewer(param) {
                         children: "Back to PDFs"
                     }, void 0, false, {
                         fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
-                        lineNumber: 276,
+                        lineNumber: 308,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
-                lineNumber: 274,
+                lineNumber: 306,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -366,7 +404,7 @@ function PDFViewer(param) {
                                 renderAnnotationLayer: false
                             }, void 0, false, {
                                 fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
-                                lineNumber: 288,
+                                lineNumber: 320,
                                 columnNumber: 15
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -390,28 +428,28 @@ function PDFViewer(param) {
                                         }
                                     }, h.id, false, {
                                         fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
-                                        lineNumber: 308,
-                                        columnNumber: 21
+                                        lineNumber: 329,
+                                        columnNumber: 19
                                     }, this))
                             }, void 0, false, {
                                 fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
-                                lineNumber: 295,
+                                lineNumber: 327,
                                 columnNumber: 15
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
-                        lineNumber: 287,
+                        lineNumber: 319,
                         columnNumber: 13
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
-                    lineNumber: 286,
+                    lineNumber: 318,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
-                lineNumber: 284,
+                lineNumber: 316,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -424,7 +462,7 @@ function PDFViewer(param) {
                         children: "Prev"
                     }, void 0, false, {
                         fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
-                        lineNumber: 328,
+                        lineNumber: 349,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -436,7 +474,7 @@ function PDFViewer(param) {
                         ]
                     }, void 0, true, {
                         fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
-                        lineNumber: 335,
+                        lineNumber: 356,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -446,23 +484,32 @@ function PDFViewer(param) {
                         children: "Next"
                     }, void 0, false, {
                         fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
-                        lineNumber: 338,
+                        lineNumber: 359,
                         columnNumber: 9
+                    }, this),
+                    multiPageHighlight && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                        onClick: ()=>setCurrentPage(multiPageHighlight.nextPage),
+                        className: "p-2 bg-blue-600 text-white rounded hover:bg-blue-700",
+                        children: "View Next Page"
+                    }, void 0, false, {
+                        fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
+                        lineNumber: 367,
+                        columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
-                lineNumber: 327,
+                lineNumber: 348,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/Projects/ai-tutor/src/components/PDFViewer.tsx",
-        lineNumber: 271,
+        lineNumber: 305,
         columnNumber: 5
     }, this);
 }
-_s(PDFViewer, "8NAETqXLSI693Msjtsc4cgxzDvQ=", false, function() {
+_s(PDFViewer, "p95+bJg48XR/faCcHDV9bDEVE9w=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"]
     ];
