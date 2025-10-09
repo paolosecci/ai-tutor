@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 
 interface ChatInterfaceProps {
   pdfId: string;
@@ -9,6 +10,9 @@ interface ChatInterfaceProps {
 
 export default function ChatInterface({ pdfId, onHighlight }: ChatInterfaceProps) {
   const { messages, sendMessage, status, error, setMessages } = useChat();
+  const { transcript, isListening, startListening, stopListening, setTranscript } =
+    useSpeechRecognition();
+
   const lastHighlightRef = useRef<string | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
@@ -42,11 +46,9 @@ For every query, include the most relevant passage from the PDF in the "highligh
     const container = messagesContainerRef.current;
     if (!container) return;
 
-    // Check if user is near the bottom (within 100px)
     const isNearBottom =
       container.scrollHeight - container.scrollTop - container.clientHeight < 100;
 
-    // Scroll to bottom if near bottom or new message was just added
     if (isNearBottom) {
       container.scrollTo({
         top: container.scrollHeight,
@@ -60,10 +62,9 @@ For every query, include the most relevant passage from the PDF in the "highligh
   // Handle message submit
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const form = e.currentTarget as HTMLFormElement;
-    const input = form.elements.namedItem('input') as HTMLInputElement;
-    const value = input.value.trim();
+    const value = transcript.trim();
     if (!value) return;
+
     sendMessage(
       {
         id: `user-${Date.now()}`,
@@ -72,7 +73,9 @@ For every query, include the most relevant passage from the PDF in the "highligh
       },
       { body: { pdfId } }
     );
-    input.value = '';
+
+    setTranscript('');
+
     // Force scroll to bottom after user submits
     setTimeout(() => {
       const container = messagesContainerRef.current;
@@ -85,21 +88,30 @@ For every query, include the most relevant passage from the PDF in the "highligh
     }, 0);
   };
 
+  // Auto-send after speaking (optional)
+  useEffect(() => {
+    if (!isListening && transcript.trim()) {
+      const value = transcript.trim();
+      sendMessage(
+        {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          parts: [{ type: 'text', text: value }],
+        },
+        { body: { pdfId } }
+      );
+      setTranscript('');
+    }
+  }, [isListening]);
+
   // Extract JSON from response
   const extractJson = (text: string) => {
     if (!text) return null;
     try {
-      // Remove markdown-style ```json fences
-      const cleaned = text
-        .replace(/```json/gi, '')
-        .replace(/```/g, '')
-        .trim();
-
-      // Try direct JSON parse
+      const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
       try {
         return JSON.parse(cleaned);
       } catch {
-        // Try to extract JSON substring
         const jsonMatch = cleaned.match(/{[\s\S]*}/);
         if (jsonMatch) {
           try {
@@ -138,7 +150,7 @@ For every query, include the most relevant passage from the PDF in the "highligh
 
   // Handle new assistant messages for highlighting
   useEffect(() => {
-    if (messages.length === 0 || status === 'streaming') return; // Skip during streaming
+    if (messages.length === 0 || status === 'streaming') return;
 
     const lastMsg = messages[messages.length - 1];
     if (lastMsg.role !== 'assistant' || lastMsg.id === lastMessageIdRef.current) return;
@@ -156,8 +168,8 @@ For every query, include the most relevant passage from the PDF in the "highligh
           }
           lastHighlightRef.current = highlight;
           onHighlight?.([highlight]);
-        } else {
-          if (DEBUG) console.debug('ℹ️ No new highlight in response');
+        } else if (DEBUG) {
+          console.debug('ℹ️ No new highlight in response');
         }
       }
     });
@@ -207,15 +219,27 @@ For every query, include the most relevant passage from the PDF in the "highligh
       {/* Error display */}
       {error && <div className="text-red-500 p-2">{String(error)}</div>}
 
-      {/* Input */}
+      {/* Input with mic + send */}
       <form onSubmit={onSubmit} className="flex justify-center mt-2 p-2 border-t bg-white rounded-b">
         <input
           name="input"
           type="text"
-          placeholder="Ask about the PDF..."
+          placeholder={isListening ? 'Listening...' : 'Ask about the PDF...'}
           className="flex-1 p-2 rounded-l bg-gray-100 focus:outline-none"
           disabled={isLoading}
+          value={transcript}
+          onChange={(e) => setTranscript(e.target.value)}
         />
+        <button
+          type="button"
+          onClick={isListening ? stopListening : startListening}
+          className={`p-2 px-3 transition ${
+            isListening ? 'bg-red-500 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+          }`}
+          title={isListening ? 'Stop recording' : 'Start voice input'}
+        >
+          🎤
+        </button>
         <button
           type="submit"
           className="p-2 bg-blue-600 text-white px-4 rounded-r hover:bg-blue-700 transition"
