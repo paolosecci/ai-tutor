@@ -6,6 +6,7 @@ __turbopack_context__.s([
     "default",
     ()=>ChatInterface
 ]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = /*#__PURE__*/ __turbopack_context__.i("[project]/Projects/ai-tutor/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Projects/ai-tutor/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Projects/ai-tutor/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f40$ai$2d$sdk$2f$react$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Projects/ai-tutor/node_modules/@ai-sdk/react/dist/index.mjs [app-client] (ecmascript)");
@@ -18,6 +19,10 @@ function ChatInterface(param) {
     let { pdfId, onHighlight } = param;
     _s();
     const { messages, sendMessage, status, error, setMessages } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f40$ai$2d$sdk$2f$react$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useChat"])();
+    const lastHighlightRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
+    const lastMessageIdRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
+    const messagesContainerRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
+    const DEBUG = ("TURBOPACK compile-time value", "development") === 'development';
     // Initialize system prompt
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "ChatInterface.useEffect": ()=>{
@@ -33,7 +38,7 @@ function ChatInterface(param) {
                             parts: [
                                 {
                                     type: 'reasoning',
-                                    text: "You are an AI tutor assisting with questions about a PDF (ID: ".concat(pdfId, '). \nAnswer clearly and concisely. Always return JSON in the following format:\n{ "highlight": "exact text to highlight (optional)", "response": "natural language response" }.\nIf there is no highlight, "highlight" can be an empty string.')
+                                    text: "You are an AI tutor assisting with questions about a PDF (ID: ".concat(pdfId, '). \nAnswer clearly and concisely. Always return JSON in the following format:\n{ "highlight": "exact text from the PDF to highlight", "response": "natural language response" }.\nFor every query, include the most relevant passage from the PDF in the "highlight" field to provide context for your answer, even if the query does not explicitly mention "highlight". If no relevant passage exists or the query cannot be answered logically, set "highlight" to an empty string ("").')
                                 }
                             ]
                         },
@@ -45,6 +50,24 @@ function ChatInterface(param) {
     }["ChatInterface.useEffect"], [
         pdfId,
         setMessages
+    ]);
+    // Autoscroll to bottom when new messages are added or user submits
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "ChatInterface.useEffect": ()=>{
+            const container = messagesContainerRef.current;
+            if (!container) return;
+            // Check if user is near the bottom (within 100px)
+            const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+            // Scroll to bottom if near bottom or new message was just added
+            if (isNearBottom) {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+        }
+    }["ChatInterface.useEffect"], [
+        messages
     ]);
     const isLoading = status === 'submitted' || status === 'streaming';
     // Handle message submit
@@ -69,8 +92,18 @@ function ChatInterface(param) {
             }
         });
         input.value = '';
+        // Force scroll to bottom after user submits
+        setTimeout(()=>{
+            const container = messagesContainerRef.current;
+            if (container) {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+        }, 0);
     };
-    // --- Improved extractJson() ---
+    // Extract JSON from response
     const extractJson = (text)=>{
         if (!text) return null;
         try {
@@ -86,16 +119,15 @@ function ChatInterface(param) {
                     try {
                         return JSON.parse(jsonMatch[0]);
                     } catch (innerErr) {
-                        console.warn('⚠️ Loose JSON parse attempt:', innerErr);
+                        if ("TURBOPACK compile-time truthy", 1) console.warn('⚠️ Loose JSON parse attempt failed:', innerErr);
                         const loose = jsonMatch[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
                         return JSON.parse(loose);
                     }
                 }
             }
-            console.log('extractJson(): no JSON found in text.');
             return null;
         } catch (err) {
-            console.error('extractJson() fatal error:', err);
+            if ("TURBOPACK compile-time truthy", 1) console.debug('extractJson(): no JSON found');
             return null;
         }
     };
@@ -116,24 +148,28 @@ function ChatInterface(param) {
     // Handle new assistant messages for highlighting
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "ChatInterface.useEffect": ()=>{
-            if (messages.length === 0) return;
+            if (messages.length === 0 || status === 'streaming') return; // Skip during streaming
             const lastMsg = messages[messages.length - 1];
-            if (lastMsg.role !== 'assistant') return;
+            if (lastMsg.role !== 'assistant' || lastMsg.id === lastMessageIdRef.current) return;
+            lastMessageIdRef.current = lastMsg.id;
             lastMsg.parts.forEach({
                 "ChatInterface.useEffect": (part)=>{
                     if (part.type === 'text') {
-                        console.log('Processing new AI response:', part.text);
+                        if ("TURBOPACK compile-time truthy", 1) console.debug('🧩 Processing final AI response:', part.text);
                         const highlight = extractHighlight(part.text);
-                        if (highlight) {
-                            console.log('✅ New highlight found:', highlight);
-                            console.log('🔍 Calling onHighlight with:', [
-                                highlight
-                            ]);
+                        if (highlight && highlight !== lastHighlightRef.current) {
+                            if ("TURBOPACK compile-time truthy", 1) {
+                                console.debug('✅ New highlight found:', highlight);
+                                console.debug('🔍 Calling onHighlight with:', [
+                                    highlight
+                                ]);
+                            }
+                            lastHighlightRef.current = highlight;
                             onHighlight === null || onHighlight === void 0 ? void 0 : onHighlight([
                                 highlight
                             ]);
                         } else {
-                            console.log('ℹ️ No highlight in new response');
+                            if ("TURBOPACK compile-time truthy", 1) console.debug('ℹ️ No new highlight in response');
                         }
                     }
                 }
@@ -141,27 +177,30 @@ function ChatInterface(param) {
         }
     }["ChatInterface.useEffect"], [
         messages,
-        onHighlight
+        status,
+        onHighlight,
+        DEBUG
     ]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "flex flex-col h-full bg-gray-50 rounded shadow",
+        className: "flex flex-col h-full w-full bg-gray-50 rounded shadow",
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "h-[4vh] px-4 flex items-center border-b bg-white",
+                className: "h-[5vh] p-2 border-b flex items-center justify-between bg-white rounded-t",
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
                     className: "text-lg font-semibold text-gray-800",
                     children: "Chat"
                 }, void 0, false, {
                     fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                    lineNumber: 135,
+                    lineNumber: 171,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 134,
+                lineNumber: 170,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                ref: messagesContainerRef,
                 className: "flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-gray-50",
                 children: messages.map((msg)=>msg.parts.map((part, idx)=>{
                         if (part.type === 'text') {
@@ -173,12 +212,12 @@ function ChatInterface(param) {
                                     children: displayText
                                 }, void 0, false, {
                                     fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                                    lineNumber: 151,
+                                    lineNumber: 190,
                                     columnNumber: 19
                                 }, this)
                             }, "".concat(msg.id, "-").concat(idx), false, {
                                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                                lineNumber: 145,
+                                lineNumber: 184,
                                 columnNumber: 17
                             }, this);
                         }
@@ -186,7 +225,7 @@ function ChatInterface(param) {
                     }))
             }, void 0, false, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 139,
+                lineNumber: 175,
                 columnNumber: 7
             }, this),
             error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -194,48 +233,48 @@ function ChatInterface(param) {
                 children: String(error)
             }, void 0, false, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 169,
+                lineNumber: 208,
                 columnNumber: 17
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
                 onSubmit: onSubmit,
-                className: "h-[5vh] flex border-t bg-white p-1 rounded-b",
+                className: "flex justify-center mt-2 p-2 border-t bg-white rounded-b",
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                         name: "input",
                         type: "text",
                         placeholder: "Ask about the PDF...",
-                        className: "flex-1 border p-2 rounded-l focus:outline-none focus:ring-2 focus:ring-blue-300",
+                        className: "flex-1 p-2 rounded-l bg-gray-100 focus:outline-none",
                         disabled: isLoading
                     }, void 0, false, {
                         fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                        lineNumber: 173,
+                        lineNumber: 212,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                         type: "submit",
-                        className: "bg-blue-600 text-white px-4 rounded-r hover:bg-blue-700 transition",
+                        className: "p-2 bg-blue-600 text-white px-4 rounded-r hover:bg-blue-700 transition",
                         disabled: isLoading,
                         children: "Send"
                     }, void 0, false, {
                         fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                        lineNumber: 180,
+                        lineNumber: 219,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-                lineNumber: 172,
+                lineNumber: 211,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/Projects/ai-tutor/src/components/ChatInterface.tsx",
-        lineNumber: 132,
+        lineNumber: 167,
         columnNumber: 5
     }, this);
 }
-_s(ChatInterface, "wvRlASCQ3TnDY7vReJvm/SsMUsQ=", false, function() {
+_s(ChatInterface, "/okE4b7w/1m7IdRdCh8qj8MFR88=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f40$ai$2d$sdk$2f$react$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useChat"]
     ];
@@ -257,13 +296,11 @@ __turbopack_context__.s([
 var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Projects/ai-tutor/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Projects/ai-tutor/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$shared$2f$lib$2f$app$2d$dynamic$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Projects/ai-tutor/node_modules/next/dist/shared/lib/app-dynamic.js [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Projects/ai-tutor/node_modules/next/navigation.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$components$2f$ChatInterface$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Projects/ai-tutor/src/components/ChatInterface.tsx [app-client] (ecmascript)");
 ;
 ;
 var _s = __turbopack_context__.k.signature();
 'use client';
-;
 ;
 ;
 ;
@@ -282,81 +319,48 @@ _c = PDFViewer;
 function TutorPage(props) {
     _s();
     const { pdfId } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["use"])(props.params);
-    const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"])();
     const [highlights, setHighlights] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "flex h-screen w-screen bg-green-50 overflow-hidden gap-2 p-2",
+        className: "flex h-screen w-screen bg-blue-100 overflow-hidden gap-2 p-2",
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "flex flex-col bg-white rounded shadow flex-1",
-                children: [
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "h-[5vh] p-2 border-b flex items-center justify-between bg-white rounded-t",
-                        children: [
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
-                                className: "text-md font-semibold text-gray-800",
-                                children: "PDF Viewer"
-                            }, void 0, false, {
-                                fileName: "[project]/Projects/ai-tutor/src/app/tutor/[pdfId]/page.tsx",
-                                lineNumber: 28,
-                                columnNumber: 11
-                            }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
-                                onClick: ()=>router.push('/'),
-                                className: "bg-gray-200 px-2 py-0.5 text-sm rounded hover:bg-gray-300 transition",
-                                children: "Upload New PDF"
-                            }, void 0, false, {
-                                fileName: "[project]/Projects/ai-tutor/src/app/tutor/[pdfId]/page.tsx",
-                                lineNumber: 29,
-                                columnNumber: 11
-                            }, this)
-                        ]
-                    }, void 0, true, {
-                        fileName: "[project]/Projects/ai-tutor/src/app/tutor/[pdfId]/page.tsx",
-                        lineNumber: 27,
-                        columnNumber: 9
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(PDFViewer, {
-                        pdfId: pdfId,
-                        highlights: highlights
-                    }, void 0, false, {
-                        fileName: "[project]/Projects/ai-tutor/src/app/tutor/[pdfId]/page.tsx",
-                        lineNumber: 38,
-                        columnNumber: 9
-                    }, this)
-                ]
-            }, void 0, true, {
+                className: "flex flex-col rounded shadow flex-1",
+                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(PDFViewer, {
+                    pdfId: pdfId,
+                    highlights: highlights
+                }, void 0, false, {
+                    fileName: "[project]/Projects/ai-tutor/src/app/tutor/[pdfId]/page.tsx",
+                    lineNumber: 25,
+                    columnNumber: 9
+                }, this)
+            }, void 0, false, {
                 fileName: "[project]/Projects/ai-tutor/src/app/tutor/[pdfId]/page.tsx",
-                lineNumber: 25,
+                lineNumber: 24,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "flex flex-col bg-green-100 p-2 rounded shadow flex-1",
+                className: "flex flex-col rounded shadow flex-1",
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$src$2f$components$2f$ChatInterface$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
                     pdfId: pdfId,
                     onHighlight: setHighlights
                 }, void 0, false, {
                     fileName: "[project]/Projects/ai-tutor/src/app/tutor/[pdfId]/page.tsx",
-                    lineNumber: 43,
+                    lineNumber: 30,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/Projects/ai-tutor/src/app/tutor/[pdfId]/page.tsx",
-                lineNumber: 42,
+                lineNumber: 29,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/Projects/ai-tutor/src/app/tutor/[pdfId]/page.tsx",
-        lineNumber: 23,
+        lineNumber: 21,
         columnNumber: 5
     }, this);
 }
-_s(TutorPage, "xFPfL4XWLI+VfMDzJJp5ybTUN7c=", false, function() {
-    return [
-        __TURBOPACK__imported__module__$5b$project$5d2f$Projects$2f$ai$2d$tutor$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"]
-    ];
-});
+_s(TutorPage, "Hqr6MnbjdM1VD3ixtO8DtwyVGtA=");
 _c1 = TutorPage;
 var _c, _c1;
 __turbopack_context__.k.register(_c, "PDFViewer");

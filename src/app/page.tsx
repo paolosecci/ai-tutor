@@ -41,13 +41,13 @@ export default function Home() {
   if (status === 'loading') return <p>Loading...</p>;
 
   return (
-    <div className="flex h-screen bg-green-50">
+    <div className="flex h-screen bg-blue-100">
       {/* Left PDF viewer */}
       <div className="w-2/3 flex flex-col border-r bg-white">
-        <div className="p-4 border-b flex items-center justify-between">
+        <div className="p-4 border-b flex items-center justify-between bg-white">
           <h2 className="text-xl font-semibold">Your PDFs</h2>
           {session && (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 bg-white">
               <input
                 type="file"
                 accept=".pdf"
@@ -63,11 +63,11 @@ export default function Home() {
             </div>
           )}
         </div>
-        <div className="flex-1 overflow-auto p-4">
+        <div className="flex-1 overflow-auto p-4 bg-white">
           {pdfs.length === 0 ? (
             <p className="text-gray-500">No PDFs uploaded yet.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-2 bg-gray-50">
               {pdfs.map((pdf) => (
                 <li key={pdf.id}>
                   <Link
