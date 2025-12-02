@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 3, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
+    {"offset": {"line": 43, "column": 0}, "map": {"version":3,"sources":["file:///home/paolo/Projects/ai-tutor-sandbox/ai-tutor/src/lib/prisma.ts"],"sourcesContent":["import { PrismaClient } from '@prisma/client';\n\nconst prisma = new PrismaClient();\nexport default prisma;"],"names":[],"mappings":";;;;AAAA;;AAEA,MAAM,SAAS,IAAI,6IAAY;uCAChB","debugId":null}},
+    {"offset": {"line": 61, "column": 0}, "map": {"version":3,"sources":["file:///home/paolo/Projects/ai-tutor-sandbox/ai-tutor/src/app/api/register/route.ts"],"sourcesContent":["import prisma from '@/lib/prisma';\nimport bcrypt from 'bcryptjs';\n\nexport async function POST(req: Request) {\n  const { email, password } = await req.json();\n  const hashedPassword = bcrypt.hashSync(password, 10);\n  try {\n    const user = await prisma.user.create({ data: { email, password: hashedPassword } });\n    return Response.json(user, { status: 201 });\n  } catch (e) {\n    return Response.json({ error: 'User exists' }, { status: 400 });\n  }\n}"],"names":[],"mappings":";;;;AAAA;AACA;;;AAEO,eAAe,KAAK,GAAY;IACrC,MAAM,EAAE,KAAK,EAAE,QAAQ,EAAE,GAAG,MAAM,IAAI,IAAI;IAC1C,MAAM,iBAAiB,8IAAM,CAAC,QAAQ,CAAC,UAAU;IACjD,IAAI;QACF,MAAM,OAAO,MAAM,iIAAM,CAAC,IAAI,CAAC,MAAM,CAAC;YAAE,MAAM;gBAAE;gBAAO,UAAU;YAAe;QAAE;QAClF,OAAO,SAAS,IAAI,CAAC,MAAM;YAAE,QAAQ;QAAI;IAC3C,EAAE,OAAO,GAAG;QACV,OAAO,SAAS,IAAI,CAAC;YAAE,OAAO;QAAc,GAAG;YAAE,QAAQ;QAAI;IAC/D;AACF","debugId":null}}]
+}

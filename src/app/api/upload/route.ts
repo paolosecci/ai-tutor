@@ -37,7 +37,7 @@ function splitIntoChunks(text: string, maxChars = 1200): string[] {
 // Background worker
 // ---------------------------
 async function processPdfInBackground(pdfRecord: any, arrayBuffer: ArrayBuffer) {
-  console.log(`🚀 Starting background processing for PDF ${pdfRecord.id}`);
+  console.log(`Starting background processing for PDF ${pdfRecord.id}`);
 
   try {
     // Parse PDF text
@@ -54,11 +54,11 @@ async function processPdfInBackground(pdfRecord: any, arrayBuffer: ArrayBuffer) 
       pdfParser.parseBuffer(buffer);
     });
 
-    console.log(`📄 PDF text extracted (${text.length} chars)`);
+    console.log(`PDF text extracted (${text.length} chars)`);
 
     const chunks = splitIntoChunks(text, 1200);
     if (chunks.length === 0) {
-      console.log('⚠️ No text extracted, skipping embeddings.');
+      console.log('No text extracted, skipping embeddings.');
       return;
     }
 
@@ -89,13 +89,13 @@ async function processPdfInBackground(pdfRecord: any, arrayBuffer: ArrayBuffer) 
 
         globalOffset += chunk.length + 1;
       } catch (error) {
-        console.error(`❌ Embedding error for chunk ${i + 1}:`, error);
+        console.error(`Embedding error for chunk ${i + 1}:`, error);
       }
     }
 
-    console.log(`✅ PDF ${pdfRecord.id} processed successfully with ${chunks.length} chunks`);
+    console.log(`PDF ${pdfRecord.id} processed successfully with ${chunks.length} chunks`);
   } catch (error) {
-    console.error(`🔥 Background PDF processing failed for ${pdfRecord.id}:`, error);
+    console.error(`Background PDF processing failed for ${pdfRecord.id}:`, error);
   }
 }
 
@@ -144,16 +144,25 @@ export async function POST(req: Request) {
       },
     });
 
-    // ✅ Immediately return to frontend so it can redirect
+    // CREATE FIRST CHAT (NEW)
+    const chat = await prisma.chat.create({
+      data: {
+        userId: user.id,
+        pdfId: pdfRecord.id,
+      },
+    });
+
+    // Immediately return to frontend so it can redirect
     // (non-blocking background process starts after)
     setTimeout(() => {
       processPdfInBackground(pdfRecord, arrayBuffer)
         .catch((err) => console.error('Background processing failed:', err));
     }, 100); // small delay to ensure response is sent first
 
-    return NextResponse.json({ id: pdfRecord.id });
+    // RETURN CHAT ID (CHANGED)
+    return NextResponse.json({ id: chat.id });
   } catch (error) {
-    console.error('❌ Upload API error:', error);
+    console.error('Upload API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 3, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
+    {"offset": {"line": 55, "column": 0}, "map": {"version":3,"sources":["file:///home/paolo/Projects/ai-tutor-sandbox/ai-tutor/src/lib/prisma.ts"],"sourcesContent":["import { PrismaClient } from '@prisma/client';\n\nconst prisma = new PrismaClient();\nexport default prisma;"],"names":[],"mappings":";;;;AAAA;;AAEA,MAAM,SAAS,IAAI,6IAAY;uCAChB","debugId":null}},
+    {"offset": {"line": 67, "column": 0}, "map": {"version":3,"sources":["file:///home/paolo/Projects/ai-tutor-sandbox/ai-tutor/src/app/api/chat/%5BchatId%5D/route.ts"],"sourcesContent":["import { NextResponse } from 'next/server';\nimport prisma from '@/lib/prisma';\n\nexport async function GET(\n  _req: Request,\n  { params }: { params: { chatId: string } }\n) {\n  const chat = await prisma.chat.findUnique({\n    where: { id: params.chatId },\n    select: { pdfId: true },\n  });\n\n  if (!chat) return NextResponse.json({}, { status: 404 });\n\n  return NextResponse.json({ pdfId: chat.pdfId });\n}"],"names":[],"mappings":";;;;AAAA;AACA;;;AAEO,eAAe,IACpB,IAAa,EACb,EAAE,MAAM,EAAkC;IAE1C,MAAM,OAAO,MAAM,iIAAM,CAAC,IAAI,CAAC,UAAU,CAAC;QACxC,OAAO;YAAE,IAAI,OAAO,MAAM;QAAC;QAC3B,QAAQ;YAAE,OAAO;QAAK;IACxB;IAEA,IAAI,CAAC,MAAM,OAAO,gJAAY,CAAC,IAAI,CAAC,CAAC,GAAG;QAAE,QAAQ;IAAI;IAEtD,OAAO,gJAAY,CAAC,IAAI,CAAC;QAAE,OAAO,KAAK,KAAK;IAAC;AAC/C","debugId":null}}]
+}

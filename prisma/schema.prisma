@@ -38,6 +38,7 @@ model Chat {
   id        String   @id @default(uuid())
   userId    String
   pdfId     String?
+  createdAt DateTime @default(now())
   messages  Message[]
   user      User     @relation(fields: [userId], references: [id])
   pdf       Pdf?     @relation(fields: [pdfId], references: [id])

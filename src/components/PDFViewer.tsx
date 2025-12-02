@@ -309,7 +309,7 @@ export function PDFViewer({ pdfId, highlights = [] }: PDFViewerProps) {
           onClick={() => router.push('/')}
           className="bg-gray-200 px-2 py-0.5 text-sm rounded hover:bg-gray-300 transition"
         >
-          Back to PDFs
+          Back to Home
         </button>
       </div>
 

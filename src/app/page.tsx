@@ -1,9 +1,9 @@
+// app/page.tsx (or wherever your Home lives)
 'use client';
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import ChatInterface from '@/components/ChatInterface';
-import Link from 'next/link';
+import ChatList from '@/components/ChatList';
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -38,12 +38,26 @@ export default function Home() {
     }
   };
 
+  // THIS IS THE NEW MAGIC
+  const handleOpenPdf = async (pdfId: string) => {
+    const res = await fetch('/api/chats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pdfId }),
+    });
+
+    if (res.ok) {
+      const { id: chatId } = await res.json();
+      router.push(`/tutor/${chatId}`);
+    }
+  };
+
   if (status === 'loading') return <p>Loading...</p>;
 
   return (
     <div className="flex h-screen bg-blue-100">
-      {/* Left PDF viewer */}
-      <div className="w-2/3 flex flex-col border-r bg-white">
+      {/* Left PDF List */}
+      <div className="w-1/2 flex flex-col border-r bg-white">
         <div className="p-4 border-b flex items-center justify-between bg-white">
           <h2 className="text-xl font-semibold">Your PDFs</h2>
           {session && (
@@ -70,12 +84,12 @@ export default function Home() {
             <ul className="space-y-2 bg-gray-50">
               {pdfs.map((pdf) => (
                 <li key={pdf.id}>
-                  <Link
-                    href={`/tutor/${pdf.id}`}
-                    className="block p-2 rounded hover:bg-blue-100 transition"
+                  <button
+                    onClick={() => handleOpenPdf(pdf.id)}
+                    className="block w-full text-left p-2 rounded hover:bg-blue-100 transition text-blue-700 font-medium"
                   >
                     {pdf.fileName}
-                  </Link>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -83,22 +97,16 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Right Chat Interface */}
-      <div className="w-1/3 flex flex-col p-4">
+      {/* Right Chat List */}
+      <div className="w-1/2 flex flex-col p-4">
         {session ? (
-          <ChatInterface pdfId="default" />
+          <ChatList />
         ) : (
           <div className="m-auto text-center">
             <h1 className="text-2xl mb-4 font-semibold">Welcome to AI Tutor</h1>
             <p className="text-gray-700">
-              <Link href="/signup" className="text-blue-500 hover:underline">
-                Sign up
-              </Link>{' '}
-              or{' '}
-              <Link href="/login" className="text-blue-500 hover:underline">
-                Log in
-              </Link>{' '}
-              to start chatting and uploading PDFs.
+              <a href="/signup" className="text-blue-500 hover:underline">Sign up</a> or{' '}
+              <a href="/login" className="text-blue-500 hover:underline">Log in</a> to start.
             </p>
           </div>
         )}

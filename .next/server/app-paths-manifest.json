@@ -1,10 +1,12 @@
 {
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/chat/[chatId]/route": "app/api/chat/[chatId]/route.js",
   "/api/chat/route": "app/api/chat/route.js",
+  "/api/chats/route": "app/api/chats/route.js",
+  "/api/messages/route": "app/api/messages/route.js",
   "/api/pdf/[pdfId]/route": "app/api/pdf/[pdfId]/route.js",
   "/api/pdf/route": "app/api/pdf/route.js",
   "/api/user/route": "app/api/user/route.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
   "/page": "app/page.js",
-  "/tutor/[pdfId]/page": "app/tutor/[pdfId]/page.js"
+  "/tutor/[chatId]/page": "app/tutor/[chatId]/page.js"
 }

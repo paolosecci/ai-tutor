@@ -5,51 +5,62 @@ import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 
 interface ChatInterfaceProps {
+  chatId: string;
   pdfId: string;
   onHighlight?: (highlights: string[]) => void;
 }
 
-export default function ChatInterface({ pdfId, onHighlight }: ChatInterfaceProps) {
+export default function ChatInterface({ pdfId, chatId, onHighlight }: ChatInterfaceProps) {
   const { messages, sendMessage, status, error, setMessages } = useChat();
   const { transcript, isListening, startListening, stopListening, setTranscript } = useSpeechRecognition();
-  const { speak, cancel, isSpeaking } = useSpeechSynthesis({ lang: 'en-US', rate: 1 });
-  const [isSpeakingEnabled, setIsSpeakingEnabled] = useState(true);
+  const { speak } = useSpeechSynthesis({ lang: 'en-US', rate: 1 });
+  const [isSpeakingEnabled, setIsSpeakingEnabled] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const lastHighlightRef = useRef<string | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
-  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-  const DEBUG = process.env.NODE_ENV === 'development';
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // === Initialize system prompt ===
+  // === LOAD SAVED MESSAGES ONCE ===
   useEffect(() => {
-    setMessages((prev: any[]) => {
-      if (prev.some((m: any) => m.role === 'system')) return prev;
-      return [
-        {
-          id: 'init',
-          role: 'system',
-          parts: [
-            {
-              type: 'reasoning',
-              text: `You are an AI tutor assisting with questions about a PDF (ID: ${pdfId}). 
-Answer clearly and concisely. Always return JSON in the following format:
-{ "highlight": "exact text from the PDF to highlight", "response": "natural language response" }.
-For every query, include the most relevant passage from the PDF in the "highlight" field to provide context for your answer, even if the query does not explicitly mention "highlight". If no relevant passage exists or the query cannot be answered logically, set "highlight" to an empty string ("").`,
-            },
-          ],
-        },
-        ...prev,
-      ];
-    });
-  }, [pdfId, setMessages]);
+    fetch(`/api/messages?chatId=${chatId}`)
+      .then(r => r.json())
+      .then(saved => {
+        if (Array.isArray(saved) && saved.length > 0) {
+          setMessages(saved.map((m: any) => ({
+            id: m.id,
+            role: m.role,
+            parts: [{ type: 'text', text: m.content }]
+          })));
+        }
+        setHasInitialized(true);
+      })
+      .catch(() => setHasInitialized(true));
+  }, [chatId, setMessages]);
 
-  // === Autoscroll on new messages ===
+  // === ADD SYSTEM PROMPT ONLY ONCE, AFTER MESSAGES LOADED ===
+  useEffect(() => {
+    if (!hasInitialized) return;
+    if (messages.length === 0) {
+      setMessages([
+        {
+          id: 'system-init',
+          role: 'system',
+          parts: [{
+            type: 'reasoning',
+            text: `You are an AI tutor assisting with questions about a PDF (ID: ${pdfId}). Answer clearly and concisely. Always return JSON in the following format: { "highlight": "exact text from the PDF to highlight", "response": "natural language response" }. For every query, include the most relevant passage from the PDF in the "highlight" field. If no relevant passage exists, set "highlight" to "".`,
+          }],
+        },
+      ]);
+    }
+  }, [hasInitialized, messages.length, pdfId, setMessages]);
+
+  // === AUTO-SCROLL TO BOTTOM ===
   useEffect(() => {
     const container = messagesContainerRef.current;
-    if (!container) return;
-    const isNearBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-    if (isNearBottom) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [messages]);
 
   const isLoading = status === 'submitted' || status === 'streaming';
@@ -65,16 +76,17 @@ For every query, include the most relevant passage from the PDF in the "highligh
       { body: { pdfId } }
     );
 
+    fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chatId, role: 'user', content: value })
+    }).catch(() => {});
+
     setTranscript('');
     stopListening();
-
-    setTimeout(() => {
-      const container = messagesContainerRef.current;
-      if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-    }, 0);
   };
 
-  // Optional: auto-send after stopping mic
+  // Auto-send after voice
   useEffect(() => {
     if (!isListening && transcript.trim()) {
       const value = transcript.trim();
@@ -82,43 +94,18 @@ For every query, include the most relevant passage from the PDF in the "highligh
         { id: `user-${Date.now()}`, role: 'user', parts: [{ type: 'text', text: value }] },
         { body: { pdfId } }
       );
+
+      fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chatId, role: 'user', content: value })
+      }).catch(() => {});
+
       setTranscript('');
     }
   }, [isListening]);
 
-  // === Extract JSON from assistant response ===
-  const extractJson = (text: string) => {
-    if (!text) return null;
-    try {
-      const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-      try { return JSON.parse(cleaned); } catch {
-        const match = cleaned.match(/{[\s\S]*}/);
-        if (match) {
-          try { return JSON.parse(match[0]); } catch {
-            const loose = match[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
-            return JSON.parse(loose);
-          }
-        }
-      }
-      return null;
-    } catch { return null; }
-  };
-
-  const getDisplayText = (text: string, role: string) => {
-    if (role !== 'assistant') return text;
-    const parsed = extractJson(text);
-    return parsed?.response || text;
-  };
-
-  const extractHighlight = (text: string) => {
-    const parsed = extractJson(text);
-    if (parsed?.highlight && typeof parsed.highlight === 'string' && parsed.highlight.trim()) {
-      return parsed.highlight.trim();
-    }
-    return null;
-  };
-
-  // === Handle new assistant messages for highlight + TTS ===
+  // === Process assistant response (highlight + TTS + save ONCE) ===
   useEffect(() => {
     if (messages.length === 0 || status === 'streaming') return;
     const lastMsg = messages[messages.length - 1];
@@ -128,82 +115,97 @@ For every query, include the most relevant passage from the PDF in the "highligh
 
     lastMsg.parts.forEach(part => {
       if (part.type === 'text') {
-        const parsed = extractJson(part.text);
-        const highlight = parsed?.highlight;
-        const response = parsed?.response;
+        const text = part.text.trim();
+        if (!text) return;
 
-        if (highlight && highlight !== lastHighlightRef.current) {
-          lastHighlightRef.current = highlight;
-          onHighlight?.([highlight]);
+        // YOUR PREFERRED CHECK — only last message
+        const alreadySaved = messages.length > 0 &&
+                             messages[messages.length - 1].role === 'assistant' &&
+                             messages[messages.length - 1].parts[0].type === 'text' &&
+                             (messages[messages.length - 1].parts[0] as { text: string }).text.trim() === text;
+
+        if (!alreadySaved) {
+          fetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatId, role: 'assistant', content: text })
+          }).catch(() => {});
         }
 
-        if (response && isSpeakingEnabled) speak(response);
+        // Highlight + TTS
+        try {
+          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.highlight?.trim() && parsed.highlight.trim() !== lastHighlightRef.current) {
+              lastHighlightRef.current = parsed.highlight.trim();
+              onHighlight?.([parsed.highlight.trim()]);
+            }
+            if (parsed.response && isSpeakingEnabled) {
+              speak(parsed.response);
+            }
+          }
+        } catch {}
       }
     });
-  }, [messages, status, onHighlight, isSpeakingEnabled]);
+  }, [messages, status, onHighlight, isSpeakingEnabled, chatId]);
 
   return (
     <div className="flex flex-col h-full w-full bg-gray-50 rounded shadow">
-
-      {/* Header */}
       <div className="h-[5vh] p-2 border-b flex items-center justify-between bg-white rounded-t">
         <h2 className="text-lg font-semibold text-gray-800">Chat</h2>
         <button
           type="button"
-          className={`px-3 py-1 rounded ${isSpeakingEnabled ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-          onClick={() => setIsSpeakingEnabled(!isSpeakingEnabled)}
+          className={`px-3 py-1 rounded text-sm ${isSpeakingEnabled ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+          onClick={() => setIsSpeakingEnabled(v => !v)}
         >
-          {isSpeakingEnabled ? '🔊 Voice On' : '🔈 Off'}
+          {isSpeakingEnabled ? 'Voice On' : 'Voice Off'}
         </button>
       </div>
 
-      {/* Messages */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-gray-50">
         {messages.map((msg: any) =>
           msg.parts.map((part: any, idx: number) => {
-            if (part.type === 'text') {
-              const displayText = getDisplayText(part.text, msg.role);
-              return (
-                <div key={`${msg.id}-${idx}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[75%] break-words p-4 m-1 rounded-2xl shadow ${
-                    msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'
-                  }`}>
-                    {displayText}
-                  </div>
+            if (part.type !== 'text') return null;
+            const displayText = msg.role === 'assistant'
+              ? (JSON.parse(part.text.match(/\{[\s\S]*\}/)?.[0] || '{}')?.response || part.text)
+              : part.text;
+
+            return (
+              <div key={`${msg.id}-${idx}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[75%] break-words p-4 rounded-2xl shadow ${
+                  msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'
+                }`}>
+                  {displayText}
                 </div>
-              );
-            }
-            return null;
+              </div>
+            );
           })
         )}
       </div>
 
-      {/* Error display */}
-      {error && <div className="text-red-500 p-2">{String(error)}</div>}
+      {error && <div className="text-red-500 p-2 text-center">{String(error)}</div>}
 
-      {/* Input + mic + send */}
-      <form onSubmit={onSubmit} className="flex justify-center mt-2 p-2 border-t bg-white rounded-b">
+      <form onSubmit={onSubmit} className="flex p-2 border-t bg-white rounded-b gap-2">
         <input
-          name="input"
           type="text"
           placeholder={isListening ? 'Listening...' : 'Ask about the PDF...'}
-          className="flex-1 p-2 rounded-l bg-gray-100 focus:outline-none"
-          disabled={isLoading}
+          className="flex-1 px-4 py-2 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={transcript}
           onChange={(e) => setTranscript(e.target.value)}
+          disabled={isLoading}
         />
         <button
           type="button"
           onClick={isListening ? stopListening : startListening}
-          className={`p-2 px-3 transition ${isListening ? 'bg-red-500 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}
-          title={isListening ? 'Stop recording' : 'Start voice input'}
+          className={`p-3 rounded ${isListening ? 'bg-red-500 text-gray-300' : 'bg-gray-200 hover:bg-gray-500'}`}
         >
-          🎤
+          {isListening ? '...' : '🎤'}
         </button>
         <button
           type="submit"
-          className="p-2 bg-blue-600 text-white px-4 rounded-r hover:bg-blue-700 transition"
           disabled={isLoading}
+          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
         >
           Send
         </button>
