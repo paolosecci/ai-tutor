@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { put } from '@vercel/blob';
 import PDFParser from 'pdf2json';
 import OpenAI from 'openai';
 import { getServerSession } from 'next-auth';
@@ -34,17 +33,19 @@ function splitIntoChunks(text: string, maxChars = 1200): string[] {
 }
 
 // ---------------------------
-// Background worker
+// Background: extract text + create embeddings
 // ---------------------------
 async function processPdfInBackground(pdfRecord: any, arrayBuffer: ArrayBuffer) {
   console.log(`Starting background processing for PDF ${pdfRecord.id}`);
 
   try {
-    // Parse PDF text
     const pdfParser = new PDFParser();
     const buffer = Buffer.from(arrayBuffer);
+
     const text = await new Promise<string>((resolve, reject) => {
-      pdfParser.on('pdfParser_dataError', (errData: any) => reject(new Error(errData.parserError)));
+      pdfParser.on('pdfParser_dataError', (errData: any) =>
+        reject(new Error(errData.parserError))
+      );
       pdfParser.on('pdfParser_dataReady', (pdfData: any) => {
         const extractedText = pdfData.Pages.flatMap((page: any) =>
           page.Texts.map((t: any) => decodeURIComponent(t.R[0].T))
@@ -74,8 +75,6 @@ async function processPdfInBackground(pdfRecord: any, arrayBuffer: ArrayBuffer) 
           input: chunk,
         });
 
-        const embedding = emb.data[0].embedding;
-
         await prisma.pdfChunk.create({
           data: {
             pdfId: pdfRecord.id,
@@ -83,11 +82,11 @@ async function processPdfInBackground(pdfRecord: any, arrayBuffer: ArrayBuffer) 
             start,
             end,
             text: chunk,
-            embedding,
+            embedding: emb.data[0].embedding,
           },
         });
 
-        globalOffset += chunk.length + 1;
+        globalOffset += chunk.length + 1; // +1 for the space/newline we "lost"
       } catch (error) {
         console.error(`Embedding error for chunk ${i + 1}:`, error);
       }
@@ -100,11 +99,11 @@ async function processPdfInBackground(pdfRecord: any, arrayBuffer: ArrayBuffer) 
 }
 
 // ---------------------------
-// Upload Endpoint
+// MAIN UPLOAD ENDPOINT
 // ---------------------------
 export async function POST(req: Request) {
   try {
-    // Authenticate
+    // Auth
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -118,33 +117,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Validate file
+    // Get file
     const formData = await req.formData();
     const file = formData.get('pdf') as File | null;
-    if (!file) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
-    }
+    if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     if (!file.name.toLowerCase().endsWith('.pdf')) {
       return NextResponse.json({ error: 'Only PDF files are allowed' }, { status: 400 });
     }
 
-    // Save file locally
-    const uploadDir = path.join(process.cwd(), 'public/uploads');
-    await mkdir(uploadDir, { recursive: true });
-    const filePath = path.join(uploadDir, `${user.id}-${Date.now()}-${file.name}`);
+    // Read buffer once (needed for background processing)
     const arrayBuffer = await file.arrayBuffer();
-    await writeFile(filePath, Buffer.from(arrayBuffer));
 
-    // Create PDF record in DB
+    // Upload to Vercel Blob (your store name is already linked via BLOB_READ_WRITE_TOKEN)
+    const { url } = await put(`pdfs/${user.id}-${Date.now()}-${file.name}`, file.stream(), {
+      access: 'public',
+      token: process.env.BLOB_READ_WRITE_TOKEN, // explicit = bulletproof
+    });
+
+    // Create DB records
     const pdfRecord = await prisma.pdf.create({
       data: {
         userId: user.id,
         fileName: file.name,
-        filePath: `/uploads/${path.basename(filePath)}`,
+        filePath: url, // public URL
       },
     });
 
-    // CREATE FIRST CHAT (NEW)
     const chat = await prisma.chat.create({
       data: {
         userId: user.id,
@@ -152,17 +150,15 @@ export async function POST(req: Request) {
       },
     });
 
-    // Immediately return to frontend so it can redirect
-    // (non-blocking background process starts after)
+    // Fire-and-forget background embedding job
     setTimeout(() => {
-      processPdfInBackground(pdfRecord, arrayBuffer)
-        .catch((err) => console.error('Background processing failed:', err));
-    }, 100); // small delay to ensure response is sent first
+      processPdfInBackground(pdfRecord, arrayBuffer).catch(console.error);
+    }, 100);
 
-    // RETURN CHAT ID (CHANGED)
+    // Immediate response so user gets redirected fast
     return NextResponse.json({ id: chat.id });
   } catch (error) {
     console.error('Upload API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }
