@@ -2,7 +2,7 @@
 
 ---
 
-# Deploy Locally
+# To Deploy Locally:
 
 `npx prisma studio` to run the prisma db server on https://localhost:5555
 
