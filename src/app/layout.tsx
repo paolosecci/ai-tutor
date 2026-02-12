@@ -2,7 +2,7 @@ import { SessionProviderWrapper } from '@/components/SessionProviderWrapper';
 import './globals.css';
 
 export const metadata = {
-  title: 'AI Tutor',
+  title: 'Virgil',
   description: 'AI-powered PDF tutor',
 };
 
