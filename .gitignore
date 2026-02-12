@@ -1,1 +1,35 @@
-node_modules
+# Next.js build artifacts
+.next/
+out/
+.turbo/
+
+# Dependencies
+node_modules/
+
+# Vercel
+.vercel/
+.vercelignore
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env files
+.env.local
+.env.*.local
+
+# Editor / OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Temporary build files
+*.nft.json
+*.min.js
+*.min.js.map
+
+# Cache
+.cache/
