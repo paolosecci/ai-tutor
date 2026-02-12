@@ -20,7 +20,7 @@
     "bcryptjs": "^3.0.2",
     "fabric": "^6.7.1",
     "fuzzball": "^2.2.3",
-    "next": "15.5.4",
+    "next": "^16.1.6",
     "next-auth": "^4.24.11",
     "openai": "^4.104.0",
     "pdf-parse": "^1.1.1",
