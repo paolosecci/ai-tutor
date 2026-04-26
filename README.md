@@ -1,6 +1,3 @@
-# https://virgil.paolo.run/
-
----
 
 # To Deploy Locally:
 
